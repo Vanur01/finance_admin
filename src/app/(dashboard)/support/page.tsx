@@ -8,6 +8,7 @@ import {
   MessageCircle,
   Calendar as CalendarIcon,
   Clock,
+  Plus,
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,14 +37,17 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import useSupportStore from '@/lib/stores/supportStore';
+import useSupportStore from '@/lib/stores/supportStoreNew';
+// import CreateSupportModal from '@/app/components/support/CreateSupportModal';
+import ViewSupportModal from '@/app/components/support/ViewSupportModal';
+import UpdateSupportModal from '@/app/components/support/UpdateSupportModal';
 
 const SupportPage = () => {
   const { 
-    tickets = [],
+    supports = [],
     loading, 
     error, 
-    fetchTickets,
+    fetchSupports,
     filters,
     setFilters,
     resetFilters 
@@ -51,6 +55,11 @@ const SupportPage = () => {
   
   const [showFilters, setShowFilters] = useState(false);
   const [searchInput, setSearchInput] = useState(filters.search);
+  const [selectedSupportId, setSelectedSupportId] = useState<string | null>(null);
+  const [selectedSupport, setSelectedSupport] = useState<any>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   const handleSearch = () => {
     setFilters({ search: searchInput });
@@ -63,22 +72,22 @@ const SupportPage = () => {
   };
 
   useEffect(() => {
-    fetchTickets(1, 10);
-  }, [fetchTickets, filters]);
+    fetchSupports({ page: 1, limit: 10 });
+  }, [fetchSupports, filters]);
 
-  // Filter tickets based on search and filters
-  const filteredTickets = (tickets || []).filter(ticket => {
+  // Filter supports based on search and filters
+  const filteredSupports = (supports || []).filter((support) => {
     const matchesSearch = 
-      ticket.user.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      ticket.subject.toLowerCase().includes(filters.search.toLowerCase()) ||
-      ticket._id.toLowerCase().includes(filters.search.toLowerCase());
+      (support.userName?.toLowerCase().includes(filters.search.toLowerCase()) || false) ||
+      (support.subject?.toLowerCase().includes(filters.search.toLowerCase()) || false) ||
+      (support._id?.toLowerCase().includes(filters.search.toLowerCase()) || false);
     
-    const matchesStatus = filters.status === 'all' || ticket.status === filters.status;
-    const matchesPriority = filters.priority === 'all' || ticket.priority === filters.priority;
-    const matchesCategory = filters.category === 'all' || ticket.category === filters.category;
-    const matchesDate = !filters.date || new Date(ticket.createdAt).toDateString() === filters.date.toDateString();
+    const matchesStatus = filters.status === 'all' || support.status === filters.status;
+    const matchesPriority = filters.priority === 'all' || support.priority === filters.priority;
+    const matchesCategory = filters.category === 'all' || 
+      support.category.toLowerCase() === filters.category.toLowerCase();
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesCategory && matchesDate;
+    return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
   });
 
   const getPriorityBadge = (priority: string) => {
@@ -128,7 +137,7 @@ const SupportPage = () => {
           <Button 
             variant="outline" 
             className="mt-4"
-            onClick={() => fetchTickets(1, 10)}
+            onClick={() => fetchSupports({ page: 1, limit: 10 })}
           >
             Retry
           </Button>
@@ -141,7 +150,14 @@ const SupportPage = () => {
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h2 className="text-2xl font-bold tracking-tight">Support Tickets</h2>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* <Button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4" />
+            Create Support
+          </Button> */}
           <div className="relative w-full md:w-80">
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -243,31 +259,7 @@ const SupportPage = () => {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Date</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !filters.date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {filters.date ? format(filters.date, "PPP") : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={filters.date}
-                      onSelect={(date) => setFilters({ date })}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+              {/* Removed date filter since it's not in the current store */}
             </div>
           </CardContent>
         </Card>
@@ -289,47 +281,99 @@ const SupportPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredTickets.map((ticket) => (
-              <TableRow key={ticket._id}>
-                <TableCell className="font-medium">{ticket._id}</TableCell>
-                <TableCell>{ticket.user.name}</TableCell>
-                <TableCell>{ticket.subject}</TableCell>
-                <TableCell>{getPriorityBadge(ticket.priority)}</TableCell>
-                <TableCell>{getStatusBadge(ticket.status)}</TableCell>
-                <TableCell className="capitalize">{ticket.category.replace('-', ' ')}</TableCell>
-                <TableCell>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <CalendarIcon className="w-4 h-4 mr-2" />
-                    {format(new Date(ticket.createdAt), "MMM d, yyyy")}
-                    <Clock className="w-4 h-4 ml-4 mr-2" />
-                    {format(new Date(ticket.createdAt), "h:mm a")}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-3">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-600 hover:text-blue-600"
-                      title="View Ticket"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-600 hover:text-green-600"
-                      title="Respond to Ticket"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                    </Button>
-                  </div>
+            {filteredSupports.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-6 text-gray-500">
+                  No support tickets found. Create a new ticket to get started.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredSupports.map((support) => (
+                <TableRow key={support._id}>
+                  <TableCell className="font-medium">{support.ticketId || support._id}</TableCell>
+                  <TableCell>{support.userName || 'N/A'}</TableCell>
+                  <TableCell>{support.subject}</TableCell>
+                  <TableCell>{getPriorityBadge(support.priority)}</TableCell>
+                  <TableCell>{getStatusBadge(support.status)}</TableCell>
+                  <TableCell className="capitalize">{(support.category || '').toString().replace('-', ' ')}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <CalendarIcon className="w-4 h-4 mr-2" />
+                      {format(new Date(support.createdAt), "MMM d, yyyy")}
+                      <Clock className="w-4 h-4 ml-4 mr-2" />
+                      {format(new Date(support.createdAt), "h:mm a")}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-3">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-600 hover:text-blue-600"
+                        title="View Support Ticket"
+                        onClick={() => {
+                          setSelectedSupportId(support._id);
+                          setIsViewModalOpen(true);
+                        }}
+                      >
+                        <Eye className="w-5 h-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-600 hover:text-green-600"
+                        title="Update Support Ticket"
+                        onClick={() => {
+                          setSelectedSupport(support);
+                          setIsUpdateModalOpen(true);
+                        }}
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </Card>
+      
+      {/* Modals */}
+      {/* <CreateSupportModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => {
+          setIsCreateModalOpen(false);
+        }}
+        onSuccess={() => {
+          fetchSupports({ page: 1, limit: 10 });
+        }}
+      /> */}
+
+      {selectedSupportId && (
+        <ViewSupportModal 
+          isOpen={isViewModalOpen} 
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setSelectedSupportId(null);
+          }} 
+          supportId={selectedSupportId} 
+        />
+      )}
+
+      {selectedSupport && (
+        <UpdateSupportModal 
+          isOpen={isUpdateModalOpen} 
+          onClose={() => {
+            setIsUpdateModalOpen(false);
+            setSelectedSupport(null);
+          }}
+          onSuccess={() => {
+            fetchSupports({ page: 1, limit: 10 });
+          }}
+          support={selectedSupport} 
+        />
+      )}
     </div>
   );
 };

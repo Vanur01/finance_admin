@@ -1,109 +1,109 @@
 import axiosInstance from "./AxiosInstance";
 
 // Types
-interface User {
+export interface Support {
   _id: string;
-  email: string;
-  name: string;
-  mobile: string;
-}
-
-interface SupportTicket {
-  _id: string;
-  user: User;
-  category: string;
+  ticketId: string;
   subject: string;
+  description: string;
+  category: "Technical" | "Billing" | "General" | "Feature Request";
   priority: "low" | "medium" | "high";
   status: "new" | "in-progress" | "resolved" | "closed";
-  description: string;
+  reply?: string;
   createdAt: string;
   updatedAt: string;
+  userName: string;
+  userEmail: string;
+  userId: string;
+  companyName: string;
+  companyId: string;
 }
 
-interface PaginatedResponse {
-  statusCode: 200;
-  status: "1";
-  message: "successfully create a support ticket";
-  data: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    tickets: SupportTicket[];
-  };
+export interface SupportsResponse {
+  message: string;
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  data: Support[];
 }
 
-export async function getAllSupportTickets(
-  page: string = "1",
-  limit: string = "10"
-): Promise<PaginatedResponse> {
+export interface SingleSupportResponse {
+  message: string;
+  data: Support;
+}
+
+export interface CreateSupportRequest {
+  category: Support['category'];
+  subject: string;
+  priority: Support['priority'];
+  description: string;
+}
+
+export interface UpdateSupportRequest {
+  status?: Support['status'];
+  reply?: string;
+}
+
+// API Functions
+export const createSupport = async (data: CreateSupportRequest) => {
   try {
-    const response = await axiosInstance.get<PaginatedResponse>(
-      "/v1/users/getAllSupportTickets",
-      {
-        params: {
-          page,
-          limit,
-        },
-      }
-    );
-
-    return response.data;
-  } catch (error: any) {
-    console.error("Error in getAllSupportTickets:", error);
-
-    const message = error.response?.data?.message || "Internal server error";
-    throw new Error(message);
-  }
-}
-
-export async function getSupportTicketById(id: string): Promise<SupportTicket> {
-  try {
-    const response = await axiosInstance.get<SupportTicket>(
-      `/v1/users/getSupportTicket/${id}`
+    const response = await axiosInstance.post<SingleSupportResponse>(
+      '/api/v1/support/createSupport',
+      data
     );
     return response.data;
-  } catch (error: any) {
-    console.error("Error in getSupportTicketById:", error);
-    const message =
-      error.response?.data?.message || "Failed to fetch support ticket";
-    throw new Error(message);
+  } catch (error) {
+    console.error('Error creating support ticket:', error);
+    throw error;
   }
-}
+};
 
-export async function updateSupportTicketStatus(
-  id: string,
-  status: SupportTicket["status"]
-): Promise<SupportTicket> {
+export const getAllSupports = async (page: number = 1, limit: number = 10) => {
   try {
-    const response = await axiosInstance.patch<SupportTicket>(
-      `/v1/users/updateSupportTicketStatus/${id}`,
-      {
-        status,
-      }
+    const response = await axiosInstance.get<SupportsResponse>(
+      `/api/v1/support/getAllSupports?page=${page}&limit=${limit}`
     );
     return response.data;
-  } catch (error: any) {
-    console.error("Error in updateSupportTicketStatus:", error);
-    const message =
-      error.response?.data?.message || "Failed to update support ticket status";
-    throw new Error(message);
+  } catch (error) {
+    console.error('Error fetching support tickets:', error);
+    throw error;
   }
-}
+};
 
-export async function createSupportTicket(
-  ticketData: Omit<SupportTicket, "_id" | "createdAt" | "updatedAt">
-): Promise<SupportTicket> {
+export const getSupportById = async (id: string) => {
   try {
-    const response = await axiosInstance.post<SupportTicket>(
-      "/v1/users/createSupportTicket",
-      ticketData
+    const response = await axiosInstance.get<SingleSupportResponse>(
+      `/api/v1/support/getSupportById/${id}`
     );
     return response.data;
-  } catch (error: any) {
-    console.error("Error in createSupportTicket:", error);
-    const message =
-      error.response?.data?.message || "Failed to create support ticket";
-    throw new Error(message);
+  } catch (error) {
+    console.error('Error fetching support ticket details:', error);
+    throw error;
   }
-}
+};
+
+export const updateSupport = async (id: string, data: UpdateSupportRequest) => {
+  try {
+    const response = await axiosInstance.put<SingleSupportResponse>(
+      `/api/v1/support/updateSupport/${id}`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error updating support ticket:', error);
+    throw error;
+  }
+};
+
+export const deleteSupport = async (id: string) => {
+  try {
+    const response = await axiosInstance.delete<{ message: string }>(
+      `/api/v1/support/deleteSupport/${id}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting support ticket:', error);
+    throw error;
+  }
+};

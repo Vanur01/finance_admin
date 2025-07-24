@@ -1,4 +1,5 @@
-import { X, User, Mail, Phone, MessageSquare, Clock, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { X, Clock, CheckCircle2, AlertCircle, XCircle, MessageSquare } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -16,62 +17,75 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import useContactStore from "@/lib/stores/contactStore";
-import { useState } from "react";
-import { Contact } from "@/app/api/contact";
+import useSupportStore from "@/lib/stores/supportStoreNew";
+import { Support, UpdateSupportRequest } from "@/app/api/supportApi";
 
-interface UpdateContactProps {
+interface UpdateSupportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  contact: Contact;
+  support: Support;
+  onSuccess?: () => void;
 }
 
-export default function UpdateContact({ isOpen, onClose, contact }: UpdateContactProps) {
-  const { updateContact } = useContactStore();
-  const [formData, setFormData] = useState({
-    name: contact.name,
-    email: contact.email,
-    mobile: contact.mobile,
-    message: contact.message,
-    status: contact.status as 'new' | 'converted'
+export default function UpdateSupportModal({ isOpen, onClose, support, onSuccess }: UpdateSupportModalProps) {
+  const { updateSupport } = useSupportStore();
+  const [formData, setFormData] = useState<UpdateSupportRequest>({
+    status: support.status,
+    reply: support.reply || ""
   });
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (field: keyof typeof formData) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: e.target.value
-    }));
-  };
-
-  const handleStatusChange = (value: 'new' | 'converted') => {
+  const handleStatusChange = (value: Support['status']) => {
     setFormData(prev => ({
       ...prev,
       status: value
     }));
   };
 
+  const handleReplyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      reply: e.target.value
+    }));
+  };
+
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      await updateContact(contact._id, formData);
+      await updateSupport(support._id, formData);
+      // Call onSuccess to refresh data if provided
+      if (onSuccess) {
+        onSuccess();
+      }
       onClose();
     } catch (error) {
-      console.error('Error updating contact:', error);
+      console.error('Error updating support:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "new":
+        return <Clock className="w-4 h-4 text-blue-500" />;
+      case "in-progress":
+        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
+      case "resolved":
+        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+      case "closed":
+        return <XCircle className="w-4 h-4 text-red-500" />;
+      default:
+        return <Clock className="w-4 h-4 text-blue-500" />;
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Update Contact</DialogTitle>
+          <DialogTitle>Update Support Ticket</DialogTitle>
           <DialogClose className="absolute right-4 top-4">
             <X className="h-4 w-4" />
           </DialogClose>
@@ -79,38 +93,18 @@ export default function UpdateContact({ isOpen, onClose, contact }: UpdateContac
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label className="flex items-center">
-              <User className="w-4 h-4 mr-2 text-muted-foreground" />
-              Name
+              Ticket ID
             </Label>
-            <Input
-              value={formData.name}
-              onChange={handleChange('name')}
-              placeholder="Contact name"
-            />
+            <div className="text-sm font-medium">{support.ticketId}</div>
           </div>
+          
           <div className="grid gap-2">
             <Label className="flex items-center">
-              <Mail className="w-4 h-4 mr-2 text-muted-foreground" />
-              Email
+              Subject
             </Label>
-            <Input
-              type="email"
-              value={formData.email}
-              onChange={handleChange('email')}
-              placeholder="Contact email"
-            />
+            <div className="text-sm">{support.subject}</div>
           </div>
-          <div className="grid gap-2">
-            <Label className="flex items-center">
-              <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
-              Mobile
-            </Label>
-            <Input
-              value={formData.mobile}
-              onChange={handleChange('mobile')}
-              placeholder="Contact mobile"
-            />
-          </div>
+          
           <div className="grid gap-2">
             <Label className="flex items-center">
               <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -127,24 +121,37 @@ export default function UpdateContact({ isOpen, onClose, contact }: UpdateContac
                     <span>New</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="converted">
+                <SelectItem value="in-progress">
+                  <div className="flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-2 text-yellow-500" />
+                    <span>In Progress</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="resolved">
                   <div className="flex items-center">
                     <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
-                    <span>Converted</span>
+                    <span>Resolved</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="closed">
+                  <div className="flex items-center">
+                    <XCircle className="w-4 h-4 mr-2 text-red-500" />
+                    <span>Closed</span>
                   </div>
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
+          
           <div className="grid gap-2">
             <Label className="flex items-center">
               <MessageSquare className="w-4 h-4 mr-2 text-muted-foreground" />
-              Message
+              Reply
             </Label>
             <Textarea
-              value={formData.message}
-              onChange={handleChange('message')}
-              placeholder="Contact message"
+              value={formData.reply}
+              onChange={handleReplyChange}
+              placeholder="Add a reply or resolution details..."
               rows={5}
               className="min-h-[120px] resize-none"
             />
@@ -155,7 +162,7 @@ export default function UpdateContact({ isOpen, onClose, contact }: UpdateContac
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={loading} className="ml-2">
-            {loading ? "Updating..." : "Update"}
+            {loading ? "Updating..." : "Update Ticket"}
           </Button>
         </DialogFooter>
       </DialogContent>

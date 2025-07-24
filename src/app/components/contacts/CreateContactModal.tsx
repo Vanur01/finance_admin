@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { X, User, Mail, Phone, MessageSquare, Clock, CheckCircle2 } from 'lucide-react';
 import {
   Dialog,
@@ -19,23 +20,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import useContactStore from "@/lib/stores/contactStore";
-import { useState } from "react";
-import { Contact } from "@/app/api/contact";
 
-interface UpdateContactProps {
+interface CreateContactModalProps {
   isOpen: boolean;
   onClose: () => void;
-  contact: Contact;
 }
 
-export default function UpdateContact({ isOpen, onClose, contact }: UpdateContactProps) {
-  const { updateContact } = useContactStore();
+export default function CreateContactModal({ isOpen, onClose }: CreateContactModalProps) {
+  const { createContact } = useContactStore();
   const [formData, setFormData] = useState({
-    name: contact.name,
-    email: contact.email,
-    mobile: contact.mobile,
-    message: contact.message,
-    status: contact.status as 'new' | 'converted'
+    name: '',
+    email: '',
+    mobile: '',
+    message: '',
+    status: 'new' as 'new' | 'converted'
   });
   const [loading, setLoading] = useState(false);
 
@@ -58,10 +56,17 @@ export default function UpdateContact({ isOpen, onClose, contact }: UpdateContac
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      await updateContact(contact._id, formData);
+      await createContact(formData);
+      setFormData({
+        name: '',
+        email: '',
+        mobile: '',
+        message: '',
+        status: 'new'
+      });
       onClose();
     } catch (error) {
-      console.error('Error updating contact:', error);
+      console.error('Error creating contact:', error);
     } finally {
       setLoading(false);
     }
@@ -71,7 +76,7 @@ export default function UpdateContact({ isOpen, onClose, contact }: UpdateContac
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Update Contact</DialogTitle>
+          <DialogTitle>Create New Contact</DialogTitle>
           <DialogClose className="absolute right-4 top-4">
             <X className="h-4 w-4" />
           </DialogClose>
@@ -85,7 +90,7 @@ export default function UpdateContact({ isOpen, onClose, contact }: UpdateContac
             <Input
               value={formData.name}
               onChange={handleChange('name')}
-              placeholder="Contact name"
+              placeholder="Enter name"
             />
           </div>
           <div className="grid gap-2">
@@ -97,7 +102,7 @@ export default function UpdateContact({ isOpen, onClose, contact }: UpdateContac
               type="email"
               value={formData.email}
               onChange={handleChange('email')}
-              placeholder="Contact email"
+              placeholder="Enter email"
             />
           </div>
           <div className="grid gap-2">
@@ -108,7 +113,7 @@ export default function UpdateContact({ isOpen, onClose, contact }: UpdateContac
             <Input
               value={formData.mobile}
               onChange={handleChange('mobile')}
-              placeholder="Contact mobile"
+              placeholder="Enter mobile number"
             />
           </div>
           <div className="grid gap-2">
@@ -144,7 +149,7 @@ export default function UpdateContact({ isOpen, onClose, contact }: UpdateContac
             <Textarea
               value={formData.message}
               onChange={handleChange('message')}
-              placeholder="Contact message"
+              placeholder="Enter message"
               rows={5}
               className="min-h-[120px] resize-none"
             />
@@ -155,7 +160,7 @@ export default function UpdateContact({ isOpen, onClose, contact }: UpdateContac
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={loading} className="ml-2">
-            {loading ? "Updating..." : "Update"}
+            {loading ? "Creating..." : "Create Contact"}
           </Button>
         </DialogFooter>
       </DialogContent>

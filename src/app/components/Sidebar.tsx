@@ -17,6 +17,7 @@ import {
   DollarSign,
   Presentation,
   Headset,
+  PhoneCall,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -52,7 +53,7 @@ const navItems: NavItem[] = [
   {
     title: 'Home',
     path: '/home',
-    icon: <Home className="w-5 h-5" />,
+    icon: <LayoutDashboard className="w-5 h-5" />,
   },
   {
     title: 'Clients',
@@ -74,10 +75,15 @@ const navItems: NavItem[] = [
     path: '/demos',
     icon: <Presentation className="w-5 h-5" />,
   },
-   {
+  {
     title: 'Contact-Support',
     path: '/support',
     icon: <Headset className="w-5 h-5" />,
+  },
+  {
+    title: 'Contacts',
+    path: '/contacts',
+    icon: <PhoneCall className="w-5 h-5" />,
   },
 ];
 

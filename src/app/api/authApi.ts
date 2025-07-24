@@ -33,7 +33,7 @@ export const defaultRegisterFormValues: RegisterFormData = {
   name: "",
   mobile: "",
   companyName: "",
-  role: "SUPERADMIN",
+  role: "superadmin",
   isActive: true,
   address: {
     street: "",
@@ -88,23 +88,25 @@ interface RegisterResponse {
 }
 
 interface LoginResponse {
+  success: boolean;
   statusCode: number;
-  status: string;
   message: string;
-  data: {
+  result: {
     user: {
       _id: string;
       name: string;
       email: string;
       mobile: string;
-      status: number;
-      userType: string;
+      role: string;
+      isActive: boolean;
+      deviceTokens: string[];
       tokens: string;
       refreshTokens: string;
-      deviceTokens: string[];
-      signupStatus: number;
       createdAt: string;
       updatedAt: string;
+      lastLoginDate: string;
+      profilePic: string | null;
+      company: any;
     };
   };
 }
@@ -115,31 +117,52 @@ interface RefreshTokenResponse {
   message: string;
   data: {
     user_id: string;
-    tokens: string;
-    refresh_tokens: string;
+    token: string;
+    refreshToken: string;
   };
 }
 
 export async function login(email: string, password: string, deviceToken: string) {
-  const response = await axiosInstance.post<LoginResponse>('/v1/users/login', { email, password, deviceToken });
-  return response.data.data.user;
+  try {
+    const response = await axiosInstance.post<LoginResponse>('/api/v1/user/login', { 
+      email, 
+      password, 
+      deviceToken 
+    });
+    
+    if (response.data.success) {
+      const user = response.data.result.user;
+      return {
+        ...user,
+        token: user.tokens,         // Map tokens to token
+        refreshToken: user.refreshTokens  // Map refreshTokens to refreshToken
+      };
+    } else {
+      throw new Error(response.data.message || 'Login failed');
+    }
+  } catch (error: any) {
+    console.error('Login error:', error.response?.data || error);
+    throw error;
+  }
 }
 
 export const register = async (data: RegisterRequest): Promise<RegisterResponse> => {
-  const response = await axiosInstance.post<RegisterResponse>('/v1/users/register', {
-    ...data,
-    role: 'SUPERADMIN',
-    isActive: true
+  const response = await axiosInstance.post<RegisterResponse>('/api/v1/user/register', {
+    name: data.name,
+    email: data.email,
+    password: data.password,
+    mobile: data.mobile,
+    role: data.role || 'superadmin'
   });
   return response.data;
 };
 
-export const logout = async (userId: string, fcmToken: string) =>
-  (await axiosInstance.get(`/v1/users/logout/${userId}/${fcmToken}`)).data;
+export const logout = async (userId: string, deviceToken: string) =>
+  (await axiosInstance.post('/api/v1/user/logout', { userId, deviceToken })).data;
 
 export const generateNewTokens = async (refresh_token: string) => {
   try {
-    const response = await axiosInstance.post<RefreshTokenResponse>('/v1/users/generate_new_tokens', { 
+    const response = await axiosInstance.post<RefreshTokenResponse>('/api/v1/user/generatedAuthNewToken', { 
       refresh_token 
     });
     return response.data;

@@ -9,10 +9,7 @@ interface User {
   name: string;
   email: string;
   mobile: string;
-  status: number;
-  userType: string;
-  signupStatus: number;
-  deviceTokens: string[];
+  role: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -59,21 +56,32 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   },
 
   loginUser: async (email, password, deviceToken) => {
-    const user = await login(email, password, deviceToken);
-    // Set cookies
-    Cookies.set('token', user.tokens, COOKIE_OPTIONS);
-    Cookies.set('refreshToken', user.refreshTokens, COOKIE_OPTIONS);
-    Cookies.set('user', JSON.stringify(user), COOKIE_OPTIONS);
-    set({
-      token: user.tokens,
-      refreshToken: user.refreshTokens,
-      isAuthenticated: true,
-      user
-    });
-    console.log(user)
+    try {
+      const user = await login(email, password, deviceToken);
+      console.log('Login response:', user);
+      
+      if (!user || !user.token) {
+        throw new Error('Invalid login response');
+      }
+
+      // Set cookies
+      Cookies.set('token', user.token, COOKIE_OPTIONS);
+      Cookies.set('refreshToken', user.refreshToken, COOKIE_OPTIONS);
+      Cookies.set('user', JSON.stringify(user), COOKIE_OPTIONS);
+      
+      set({
+        token: user.token,
+        refreshToken: user.refreshToken,
+        isAuthenticated: true,
+        user
+      });
+    } catch (error) {
+      console.error('Login error in store:', error);
+      throw error;
+    }
   },
 
-  logoutUser: async (fcmToken?: string) => {
+  logoutUser: async (deviceToken?: string) => {
     const currentUser = Cookies.get('user') ? JSON.parse(Cookies.get('user')!) : null;
 
     if (!currentUser?._id) {
@@ -90,7 +98,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       return;
     }
 
-    await logout(currentUser._id, fcmToken || currentUser.deviceTokens[0] || '');
+    await logout(currentUser._id, deviceToken || '');
 
     // Remove cookies
     Cookies.remove('token');
@@ -121,16 +129,16 @@ export const useAuthStore = create<AuthStore>()((set) => ({
         return;
       }
 
-      const { tokens, refresh_tokens } = response.data;
+      const { token, refreshToken } = response.data;
       
       // Update cookies with new tokens
-      Cookies.set('token', tokens, COOKIE_OPTIONS);
-      Cookies.set('refresh_token', refresh_tokens, COOKIE_OPTIONS);
+      Cookies.set('token', token, COOKIE_OPTIONS);
+      Cookies.set('refreshToken', refreshToken, COOKIE_OPTIONS);
       
       // Update store state
       set({ 
-        token: tokens,
-        refreshToken: refresh_tokens,
+        token,
+        refreshToken,
         isAuthenticated: true 
       });
     } catch (error) {

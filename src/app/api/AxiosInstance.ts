@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuthStore } from '../../lib/stores/authStore';
 
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://13.203.154.78:8000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   withCredentials: true, 
 });
 
@@ -21,8 +21,12 @@ axiosInstance.interceptors.request.use(
 
 // Response interceptor for handling token refresh
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Response:', response);
+    return response;
+  },
   async (error) => {
+    console.log('API Error:', error.response?.data || error.message);
     const originalRequest = error.config;
 
     // If error is 401 and we haven't tried to refresh token yet

@@ -23,24 +23,31 @@ export default function CaishenLogin() {
     setError("");
 
     try {
-      // Get the FCM token or fall back to default if not available
+      if (!email || !password) {
+        setError("Please enter both email and password");
+        return;
+      }
 
       let deviceToken = fcmToken;
       if (!deviceToken) {
         const generated = await generateFCMToken();
-        console.log("fcm token is ", fcmToken)
-        deviceToken = generated || "1234o4i54yt55ui1uy4rufh";
+        deviceToken = generated || "5cffxbwtfqr4qr511tbf7";
       }
-      // Call the login function from authStore
-      await loginUser(email, password, deviceToken);
 
-      // On successful login
-      router.push("/home");
+      await loginUser(email, password, deviceToken);
+      
+      // If we get here, login was successful
+      router.push("/home"); // Using replace instead of push to prevent going back to login
     } catch (err: any) {
-      setError(
-        err?.response?.data?.message ||
-          "Invalid email or password. Please try again."
-      );
+      console.error('Login error:', err);
+      // Only show error message if it's actually an error
+      if (!err.message?.includes('successfully')) {
+        const errorMessage = err?.response?.data?.message || err?.message || "Invalid email or password. Please try again.";
+        setError(errorMessage);
+      } else {
+        // If the message contains "successfully", redirect to home
+        router.replace("/home");
+      }
     } finally {
       setLoading(false);
     }

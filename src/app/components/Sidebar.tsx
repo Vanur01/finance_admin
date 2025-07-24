@@ -18,6 +18,7 @@ import {
   Presentation,
   Headset,
   PhoneCall,
+  Building,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -55,20 +56,25 @@ const navItems: NavItem[] = [
     path: '/home',
     icon: <LayoutDashboard className="w-5 h-5" />,
   },
+  // {
+  //   title: 'Clients',
+  //   path: '/clients',
+  //   icon: <Users className="w-5 h-5" />,
+  // },
+  // {
+  //   title: 'Leads',
+  //   path: '/leads',
+  //   icon: <UserPlus className="w-5 h-5" />,
+  // },
+  // {
+  //   title: 'Revenue',
+  //   path: '/revenue',
+  //   icon: <DollarSign className="w-5 h-5" />,
+  // },
   {
-    title: 'Clients',
-    path: '/clients',
-    icon: <Users className="w-5 h-5" />,
-  },
-  {
-    title: 'Leads',
-    path: '/leads',
-    icon: <UserPlus className="w-5 h-5" />,
-  },
-  {
-    title: 'Revenue',
-    path: '/revenue',
-    icon: <DollarSign className="w-5 h-5" />,
+    title: 'Companies',
+    path: '/companies',
+    icon: <Building className="w-5 h-5" />,
   },
   {
     title: 'Demos',

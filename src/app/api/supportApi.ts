@@ -59,11 +59,30 @@ export const createSupport = async (data: CreateSupportRequest) => {
   }
 };
 
-export const getAllSupports = async (page: number = 1, limit: number = 10) => {
+export interface SupportFilters {
+  search?: string;
+  status?: string;
+  priority?: string;
+  category?: string;
+}
+
+export const getAllSupports = async (
+  page: number = 1, 
+  limit: number = 10,
+  filters?: SupportFilters
+) => {
   try {
-    const response = await axiosInstance.get<SupportsResponse>(
-      `/api/v1/support/getAllSupports?page=${page}&limit=${limit}`
-    );
+    let url = `/api/v1/support/getAllSupports?page=${page}&limit=${limit}`;
+    
+    // Add filters to URL if provided
+    if (filters) {
+      if (filters.search) url += `&search=${encodeURIComponent(filters.search)}`;
+      if (filters.status && filters.status !== 'all') url += `&status=${encodeURIComponent(filters.status)}`;
+      if (filters.priority && filters.priority !== 'all') url += `&priority=${encodeURIComponent(filters.priority)}`;
+      if (filters.category && filters.category !== 'all') url += `&category=${encodeURIComponent(filters.category)}`;
+    }
+    
+    const response = await axiosInstance.get<SupportsResponse>(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching support tickets:', error);

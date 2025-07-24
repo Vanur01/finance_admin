@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -59,26 +60,30 @@ import CreateContactModal from "@/app/components/contacts/CreateContactModal";
 import { Contact } from "@/app/api/contact";
 
 export default function ContactsPage() {
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [contactToUpdate, setContactToUpdate] = useState<Contact | null>(null);
   const [deleteContact, setDeleteContact] = useState<Contact | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const { contacts, loading, total, totalPages, fetchContacts, deleteContact: deleteContactAction } = useContactStore();
+  const { 
+    contacts, 
+    loading, 
+    total, 
+    totalPages,
+    currentPage, 
+    fetchContacts, 
+    deleteContact: deleteContactAction,
+    filters,
+    setFilters,
+    resetFilters
+  } = useContactStore();
 
   useEffect(() => {
-    fetchContacts({ page: currentPage });
-  }, [currentPage, fetchContacts]);
+    fetchContacts({ page: 1 });
+  }, [fetchContacts]);
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(curr => curr + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(curr => curr - 1);
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      fetchContacts({ page: page });
     }
   };
 
@@ -114,18 +119,8 @@ const formatDate = (dateString: string | undefined) => {
   });
 };
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-
-  const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        contact.mobile.includes(searchQuery);
-    
-    const matchesStatus = statusFilter === "all" || contact.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  // We're now using the contacts directly from the store
+  // as filtering is done on the server side
   
   return (
     <div className="container mx-auto py-10">
@@ -138,19 +133,30 @@ const formatDate = (dateString: string | undefined) => {
               <Input
                 placeholder="Search contacts..."
                 className="w-[200px] pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={filters.search}
+                onChange={(e) => setFilters({ search: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    fetchContacts({ page: 1 });
+                  }
+                }}
               />
-              {searchQuery && (
+              {filters.search && (
                 <X 
                   className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer" 
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => {
+                    setFilters({ search: '' });
+                    fetchContacts({ page: 1 });
+                  }}
                 />
               )}
             </div>
             <Select
-              value={statusFilter}
-              onValueChange={setStatusFilter}
+              value={filters.status}
+              onValueChange={(value) => {
+                setFilters({ status: value });
+                fetchContacts({ page: 1 });
+              }}
             >
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Filter by status" />
@@ -185,7 +191,7 @@ const formatDate = (dateString: string | undefined) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredContacts.map((contact) => (
+                    {contacts.map((contact) => (
                       <TableRow key={contact._id}>
                         <TableCell className="font-medium">{contact.name}</TableCell>
                         <TableCell>
@@ -234,38 +240,22 @@ const formatDate = (dateString: string | undefined) => {
                   </TableBody>
                 </Table>
               </div>
-              <div className="flex justify-between items-center mt-6 px-2">
-                <div className="text-sm text-muted-foreground">
-                  Showing <span className="font-medium">{filteredContacts.length}</span> of{" "}
-                  <span className="font-medium">{total}</span> contacts
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex flex-col items-center justify-center py-4 border-t gap-2 mt-6">
+                  <Pagination 
+                    currentPage={currentPage} 
+                    totalPages={totalPages} 
+                    onPageChange={handlePageChange} 
+                    isLoading={loading}
+                    showFirstLast={true}
+                    className="mt-2"
+                  />
+                  <div className="text-sm text-muted-foreground">
+                    Showing page {currentPage} of {totalPages} ({total} total contacts)
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handlePrevPage}
-                    disabled={currentPage === 1}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                      <path d="m15 18-6-6 6-6"/>
-                    </svg>
-                    Previous
-                  </Button>
-                  <Button
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center"
-                  >
-                    Next
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1">
-                      <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                  </Button>
-                </div>
-              </div>
+              )}
             </>
           )}
         </CardContent>

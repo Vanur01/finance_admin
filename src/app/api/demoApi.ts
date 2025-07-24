@@ -48,11 +48,30 @@ export const createBooking = async (data: {
   }
 };
 
-export const getAllBookings = async (page: number = 1, limit: number = 10) => {
+export interface BookingFilters {
+  name?: string;
+  email?: string;
+  scheduledAt?: string;
+  status?: string;
+}
+
+export const getAllBookings = async (
+  page: number = 1, 
+  limit: number = 10,
+  filters?: BookingFilters
+) => {
   try {
-    const response = await axiosInstance.get<BookingsResponse>(
-      `/api/v1/user/getAllBookings?page=${page}&limit=${limit}`
-    );
+    let url = `/api/v1/user/getAllBookings?page=${page}&limit=${limit}`;
+    
+    // Add filters to URL if provided
+    if (filters) {
+      if (filters.name) url += `&name=${encodeURIComponent(filters.name)}`;
+      if (filters.email) url += `&email=${encodeURIComponent(filters.email)}`;
+      if (filters.scheduledAt) url += `&scheduledAt=${encodeURIComponent(filters.scheduledAt)}`;
+      if (filters.status) url += `&status=${encodeURIComponent(filters.status)}`;
+    }
+    
+    const response = await axiosInstance.get<BookingsResponse>(url);
     return response.data;
   } catch (error) {
     throw error;

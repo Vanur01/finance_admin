@@ -50,11 +50,32 @@ export const createContact = async (data: {
   }
 };
 
-export const getAllContacts = async (page: number = 1, limit: number = 10) => {
+export interface ContactFilters {
+  search?: string;
+  name?: string;
+  email?: string;
+  mobile?: string;
+  status?: string;
+}
+
+export const getAllContacts = async (
+  page: number = 1, 
+  limit: number = 1,
+  filters?: ContactFilters
+) => {
   try {
-    const response = await axiosInstance.get<ContactsResponse>(
-      `/api/v1/user/getAllContact?page=${page}&limit=${limit}`
-    );
+    let url = `/api/v1/user/getAllContact?page=${page}&limit=${limit}`;
+    
+    // Add filters to URL if provided
+    if (filters) {
+      if (filters.search) url += `&search=${encodeURIComponent(filters.search)}`;
+      if (filters.name) url += `&name=${encodeURIComponent(filters.name)}`;
+      if (filters.email) url += `&email=${encodeURIComponent(filters.email)}`;
+      if (filters.mobile) url += `&mobile=${encodeURIComponent(filters.mobile)}`;
+      if (filters.status) url += `&status=${encodeURIComponent(filters.status)}`;
+    }
+    
+    const response = await axiosInstance.get<ContactsResponse>(url);
     return response.data;
   } catch (error) {
     throw error;

@@ -6,6 +6,7 @@ import {
   updateContact,
   deleteContact,
   type Contact,
+  type ContactFilters,
 } from "@/app/api/contact";
 
 interface ContactStore {
@@ -16,6 +17,12 @@ interface ContactStore {
   currentPage: number;
   totalPages: number;
   selectedContact: Contact | null;
+  filters: {
+    search: string;
+    status: string;
+  };
+  setFilters: (filters: Partial<ContactStore['filters']>) => void;
+  resetFilters: () => void;
   fetchContacts: (params: { page?: number; limit?: number }) => Promise<void>;
   fetchContactById: (contactId: string) => Promise<void>;
   createContact: (data: {
@@ -38,7 +45,7 @@ interface ContactStore {
   deleteContact: (contactId: string) => Promise<void>;
 }
 
-const useContactStore = create<ContactStore>((set) => ({
+const useContactStore = create<ContactStore>((set, get) => ({
   contacts: [],
   loading: false,
   error: null,
@@ -46,11 +53,41 @@ const useContactStore = create<ContactStore>((set) => ({
   currentPage: 1,
   totalPages: 1,
   selectedContact: null,
+  filters: {
+    search: '',
+    status: 'all',
+  },
+  
+  setFilters: (newFilters) => {
+    set((state) => ({
+      filters: { ...state.filters, ...newFilters }
+    }));
+  },
+  
+  resetFilters: () => {
+    set({
+      filters: {
+        search: '',
+        status: 'all',
+      }
+    });
+  },
 
-  fetchContacts: async ({ page = 1, limit = 10 }) => {
+  fetchContacts: async ({ page = 1, limit = 1 }) => {
     try {
       set({ loading: true, error: null });
-      const response = await getAllContacts(page, limit);
+      const filters = get().filters;
+      
+      // Convert store filters to API filters
+      const apiFilters: ContactFilters = {};
+      if (filters.search) {
+        apiFilters.search = filters.search;
+      }
+      if (filters.status && filters.status !== 'all') {
+        apiFilters.status = filters.status;
+      }
+      
+      const response = await getAllContacts(page, limit, apiFilters);
       set({
         contacts: response.result.contacts,
         total: response.result.total,

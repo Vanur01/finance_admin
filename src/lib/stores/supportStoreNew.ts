@@ -8,6 +8,7 @@ import {
   type Support,
   type CreateSupportRequest,
   type UpdateSupportRequest,
+  type SupportFilters,
 } from "@/app/api/supportApi";
 
 interface SupportStore {
@@ -57,8 +58,17 @@ const useSupportStore = create<SupportStore>((set, get) => ({
 
   fetchSupports: async ({ page = 1, limit = 10 }) => {
     try {
+      const filters = get().filters;
       set({ loading: true, error: null });
-      const response = await getAllSupports(page, limit);
+      
+      // Convert store filters to API filters
+      const apiFilters: SupportFilters = {};
+      if (filters.search) apiFilters.search = filters.search;
+      if (filters.status !== 'all') apiFilters.status = filters.status;
+      if (filters.priority !== 'all') apiFilters.priority = filters.priority;
+      if (filters.category !== 'all') apiFilters.category = filters.category;
+      
+      const response = await getAllSupports(page, limit, apiFilters);
       
       set({
         supports: response.data,

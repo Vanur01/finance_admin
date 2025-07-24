@@ -38,6 +38,7 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import useSupportStore from '@/lib/stores/supportStoreNew';
+import { Pagination } from "@/components/ui/pagination";
 // import CreateSupportModal from '@/app/components/support/CreateSupportModal';
 import ViewSupportModal from '@/app/components/support/ViewSupportModal';
 import UpdateSupportModal from '@/app/components/support/UpdateSupportModal';
@@ -50,7 +51,10 @@ const SupportPage = () => {
     fetchSupports,
     filters,
     setFilters,
-    resetFilters 
+    resetFilters,
+    total,
+    currentPage,
+    totalPages
   } = useSupportStore();
   
   const [showFilters, setShowFilters] = useState(false);
@@ -63,6 +67,8 @@ const SupportPage = () => {
 
   const handleSearch = () => {
     setFilters({ search: searchInput });
+    // Reset to the first page when searching
+    fetchSupports({ page: 1, limit: 1 });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -71,24 +77,18 @@ const SupportPage = () => {
     }
   };
 
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      fetchSupports({ page, limit: 1 });
+    }
+  };
+
   useEffect(() => {
-    fetchSupports({ page: 1, limit: 10 });
-  }, [fetchSupports, filters]);
+    fetchSupports({ page: 1, limit: 1 });
+  }, [fetchSupports]);
 
-  // Filter supports based on search and filters
-  const filteredSupports = (supports || []).filter((support) => {
-    const matchesSearch = 
-      (support.userName?.toLowerCase().includes(filters.search.toLowerCase()) || false) ||
-      (support.subject?.toLowerCase().includes(filters.search.toLowerCase()) || false) ||
-      (support._id?.toLowerCase().includes(filters.search.toLowerCase()) || false);
-    
-    const matchesStatus = filters.status === 'all' || support.status === filters.status;
-    const matchesPriority = filters.priority === 'all' || support.priority === filters.priority;
-    const matchesCategory = filters.category === 'all' || 
-      support.category.toLowerCase() === filters.category.toLowerCase();
-
-    return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
-  });
+  // We're using the supports directly as they come from the API with filters already applied
+  const filteredSupports = supports || [];
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
@@ -137,7 +137,7 @@ const SupportPage = () => {
           <Button 
             variant="outline" 
             className="mt-4"
-            onClick={() => fetchSupports({ page: 1, limit: 10 })}
+            onClick={() => fetchSupports({ page: 1, limit: 1 })}
           >
             Retry
           </Button>
@@ -207,7 +207,11 @@ const SupportPage = () => {
                 <label className="text-sm font-medium">Status</label>
                 <Select
                   value={filters.status}
-                  onValueChange={(value) => setFilters({ status: value })}
+                  onValueChange={(value) => {
+                    setFilters({ status: value });
+                    // Reset to first page when filter changes
+                    fetchSupports({ page: 1, limit: 1 });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Status" />
@@ -226,7 +230,11 @@ const SupportPage = () => {
                 <label className="text-sm font-medium">Priority</label>
                 <Select
                   value={filters.priority}
-                  onValueChange={(value) => setFilters({ priority: value })}
+                  onValueChange={(value) => {
+                    setFilters({ priority: value });
+                    // Reset to first page when filter changes
+                    fetchSupports({ page: 1, limit: 1 });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Priority" />
@@ -244,7 +252,11 @@ const SupportPage = () => {
                 <label className="text-sm font-medium">Category</label>
                 <Select
                   value={filters.category}
-                  onValueChange={(value) => setFilters({ category: value })}
+                  onValueChange={(value) => {
+                    setFilters({ category: value });
+                    // Reset to first page when filter changes
+                    fetchSupports({ page: 1, limit: 1 });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Category" />
@@ -337,6 +349,23 @@ const SupportPage = () => {
             )}
           </TableBody>
         </Table>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex flex-col items-center justify-center py-4 border-t gap-2 mt-4">
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={handlePageChange} 
+              isLoading={loading}
+              showFirstLast={true}
+              className="mt-2"
+            />
+            <div className="text-sm text-muted-foreground">
+              Showing page {currentPage} of {totalPages} ({total} total tickets)
+            </div>
+          </div>
+        )}
       </Card>
       
       {/* Modals */}
@@ -346,7 +375,7 @@ const SupportPage = () => {
           setIsCreateModalOpen(false);
         }}
         onSuccess={() => {
-          fetchSupports({ page: 1, limit: 10 });
+          fetchSupports({ page: 1, limit: 1 });
         }}
       /> */}
 
@@ -369,7 +398,7 @@ const SupportPage = () => {
             setSelectedSupport(null);
           }}
           onSuccess={() => {
-            fetchSupports({ page: 1, limit: 10 });
+            fetchSupports({ page: 1, limit: 1 });
           }}
           support={selectedSupport} 
         />

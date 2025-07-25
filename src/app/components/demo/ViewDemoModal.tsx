@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog"
-import { getStatusIcon, getStatusText } from '@/app/(dashboard)/demos/page'
+import { getStatusIcon, getStatusText } from '@/app/utils/demoStatusUtils'
 import { getBookingById, type Booking } from '@/app/api/demoApi'
 
 interface Demo {

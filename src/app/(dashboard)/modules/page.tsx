@@ -140,11 +140,11 @@ export default function ModulesPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        {/* <TabsList className="mb-4">
+        <TabsList className="mb-4">
           <TabsTrigger value="all">All Modules</TabsTrigger>
           <TabsTrigger value="active">Active</TabsTrigger>
           <TabsTrigger value="inactive">Inactive</TabsTrigger>
-        </TabsList> */}
+        </TabsList>
 
         <TabsContent value="all" className="space-y-4">
           <Card>
@@ -329,9 +329,150 @@ export default function ModulesPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Same table structure as above, just filtered */}
-              {/* The filtering is already handled by filteredModules */}
+              {loading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <span className="ml-3">Loading modules...</span>
+                </div>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={
+                              selectedModuleIds.length > 0 &&
+                              selectedModuleIds.length ===
+                                filteredModules.filter((m) => m.isActive).length
+                            }
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                // Only select active modules
+                                const activeModuleIds = filteredModules
+                                  .filter((m) => m.isActive)
+                                  .map((m) => m._id);
+
+                                activeModuleIds.forEach((id) => {
+                                  if (!selectedModuleIds.includes(id)) {
+                                    toggleModuleSelection(id);
+                                  }
+                                });
+                              } else {
+                                clearModuleSelection();
+                              }
+                            }}
+                          />
+                        </TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredModules.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="h-24 text-center">
+                            No modules found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredModules.map((module) => (
+                          <TableRow key={module._id}>
+                            <TableCell>
+                              {module.isActive && (
+                                <Checkbox
+                                  checked={selectedModuleIds.includes(
+                                    module._id
+                                  )}
+                                  onCheckedChange={() =>
+                                    toggleModuleSelection(module._id)
+                                  }
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {module.name}
+                            </TableCell>
+                            <TableCell className="max-w-xs truncate">
+                              {module.description}
+                            </TableCell>
+                            <TableCell>
+                              {formatCurrency(module.price)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className="bg-green-50 text-green-700 hover:bg-green-50 border-green-200"
+                              >
+                                <CheckCircle2 className="mr-1 h-3 w-3" />
+                                Active
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => setModuleToUpdate(module)}
+                                  >
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-red-600"
+                                    onClick={() => setModuleToDelete(module)}
+                                  >
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Deactivate
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
+            {!loading && filteredModules.length > 0 && (
+              <CardFooter className="flex justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing {filteredModules.length} modules
+                </p>
+                {selectedModuleIds.length > 0 && (
+                  <div className="flex items-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearModuleSelection}
+                      className="cursor-pointer"
+                    >
+                      Clear Selection
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setIsCalculatorModalOpen(true)}
+                      className="cursor-pointer"
+                    >
+                      <Calculator className="mr-1 h-4 w-4" />
+                      Calculate Price
+                    </Button>
+                  </div>
+                )}
+              </CardFooter>
+            )}
           </Card>
         </TabsContent>
 
@@ -347,8 +488,78 @@ export default function ModulesPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Same table structure as above, just filtered */}
-              {/* The filtering is already handled by filteredModules */}
+              {loading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <span className="ml-3">Loading modules...</span>
+                </div>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredModules.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="h-24 text-center">
+                            No inactive modules found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredModules.map((module) => (
+                          <TableRow key={module._id}>
+                            <TableCell className="font-medium">
+                              {module.name}
+                            </TableCell>
+                            <TableCell className="max-w-xs truncate">
+                              {module.description}
+                            </TableCell>
+                            <TableCell>
+                              {formatCurrency(module.price)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className="bg-gray-100 text-gray-600 hover:bg-gray-100 border-gray-200"
+                              >
+                                <XCircle className="mr-1 h-3 w-3" />
+                                Inactive
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => setModuleToUpdate(module)}
+                                  >
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

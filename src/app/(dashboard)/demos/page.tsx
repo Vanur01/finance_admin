@@ -69,27 +69,8 @@ interface DemoFilters {
   };
 }
 
-const getStatusIcon = (status: Demo["status"]) => {
-  switch (status) {
-    case "scheduled":
-      return <Clock className="w-4 h-4 text-blue-500" />;
-    case "done":
-      return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-    case "missed":
-      return <XCircle className="w-4 h-4 text-red-500" />;
-  }
-};
-
-const getStatusText = (status: Demo["status"]) => {
-  switch (status) {
-    case "scheduled":
-      return "Scheduled";
-    case "done":
-      return "Done";
-    case "missed":
-      return "Missed";
-  }
-};
+// Import the utility functions instead of defining them here
+import { getStatusIcon, getStatusText } from '@/app/utils/demoStatusUtils';
 
 const DemoTable: React.FC<DemoTableProps> = ({ demos, onAction }) => {
   return (

@@ -29,6 +29,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
+import { 
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -53,6 +64,7 @@ import {
   MessageSquare,
   X,
   Plus,
+  Filter,
 } from "lucide-react";
 import useContactStore from "@/lib/stores/contactStore";
 import ViewContact from "@/app/components/contacts/ViewContact";
@@ -160,29 +172,62 @@ export default function ContactsPage() {
           </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search contacts..."
-                className="w-[200px] pl-8"
-                value={filters.search}
-                onChange={(e) => setFilters({ search: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    fetchContacts({ page: 1 });
-                  }
-                }}
-              />
-              {filters.search && (
-                <X
-                  className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
-                  onClick={() => {
-                    setFilters({ search: "" });
-                    fetchContacts({ page: 1 });
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name..."
+                  className="w-[180px] pl-8"
+                  value={filters.name || ''}
+                  onChange={(e) => setFilters({ name: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      fetchContacts({ page: 1 });
+                    }
                   }}
                 />
-              )}
+                {filters.name && (
+                  <X
+                    className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
+                    onClick={() => {
+                      setFilters({ name: "" });
+                    }}
+                  />
+                )}
+              </div>
+              
+              <div className="relative flex-1">
+                <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by email..."
+                  className="w-[180px] pl-8"
+                  value={filters.email || ''}
+                  onChange={(e) => setFilters({ email: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      fetchContacts({ page: 1 });
+                    }
+                  }}
+                />
+                {filters.email && (
+                  <X
+                    className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
+                    onClick={() => {
+                      setFilters({ email: "" });
+                    }}
+                  />
+                )}
+              </div>
+              
+              <Button 
+                onClick={() => fetchContacts({ page: 1 })}
+                className="shrink-0"
+              >
+                Search
+              </Button>
             </div>
+            
+            {/* Status filter */}
             <Select
               value={filters.status}
               onValueChange={(value) => {
@@ -199,8 +244,20 @@ export default function ContactsPage() {
                 <SelectItem value="converted">Converted</SelectItem>
               </SelectContent>
             </Select>
+            
+            {/* Reset Filters Button */}
+            <Button 
+              variant="outline"
+              onClick={() => {
+                resetFilters();
+                fetchContacts({ page: 1 });
+              }}
+            >
+              Reset Filters
+            </Button>
           </div>
         </CardHeader>
+        
         <CardContent>
           {loading ? (
             <div className="py-8 text-center">Loading contacts...</div>

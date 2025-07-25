@@ -57,8 +57,13 @@ export default function PlansPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [planToUpdate, setPlanToUpdate] = useState<Plan | null>(null);
   const [planToDeactivate, setPlanToDeactivate] = useState<Plan | null>(null);
+  const [planToDelete, setPlanToDelete] = useState<Plan | null>(null);
+  const [actionType, setActionType] = useState<"deactivate" | "delete">(
+    "deactivate"
+  );
 
-  const { plans, loading, fetchPlans, updatePlan, total } = usePlanStore();
+  const { plans, loading, fetchPlans, updatePlan, deletePlan, total } =
+    usePlanStore();
 
   const { toast } = useToast();
 
@@ -90,6 +95,25 @@ export default function PlansPage() {
         toast({
           title: "Error",
           description: `Failed to deactivate plan: ${(error as Error).message}`,
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleDelete = async () => {
+    if (planToDelete) {
+      try {
+        await deletePlan(planToDelete._id);
+        toast({
+          title: "Plan Deleted",
+          description: `${planToDelete.name} has been permanently deleted.`,
+        });
+        setPlanToDelete(null);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: `Failed to delete plan: ${(error as Error).message}`,
           variant: "destructive",
         });
       }
@@ -224,13 +248,23 @@ export default function PlansPage() {
                               </DropdownMenuItem>
                               {plan.isActive && (
                                 <DropdownMenuItem
-                                  className="text-red-600"
+                                  className="text-red-500"
                                   onClick={() => setPlanToDeactivate(plan)}
                                 >
-                                  <Trash className="mr-2 h-4 w-4" />
+                                  <XCircle className="mr-2 h-4 w-4 hover:text-black" />
                                   Deactivate
                                 </DropdownMenuItem>
                               )}
+                              <DropdownMenuItem
+                                className="text-red-700"
+                                onClick={() => {
+                                  setActionType("delete");
+                                  setPlanToDelete(plan);
+                                }}
+                              >
+                                <Trash className="mr-2 h-4 w-4 hover:text-black" />
+                                Delete Permanently
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -291,6 +325,36 @@ export default function PlansPage() {
               className="bg-red-500 hover:bg-red-600 cursor-pointer"
             >
               Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!planToDelete}
+        onOpenChange={() => setPlanToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center text-red-500">
+              <Trash className="h-5 w-5 mr-2" />
+              Confirm Deletion
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete the plan
+              <strong> {planToDelete?.name}</strong>? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="cursor-pointer">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600 cursor-pointer"
+            >
+              Delete Permanently
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

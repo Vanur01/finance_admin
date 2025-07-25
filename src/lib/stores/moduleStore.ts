@@ -3,6 +3,7 @@ import {
   getAllModules,
   createModule,
   updateModule,
+  deleteModule,
   calculateModulePrice,
   type Module,
 } from "@/app/api/moduleApi";
@@ -26,6 +27,7 @@ interface ModuleStore {
   fetchModules: () => Promise<void>;
   addModule: (data: { name: string; description: string; price: number }) => Promise<void>;
   updateModule: (moduleId: string, data: { name?: string; description?: string; price?: number; isActive?: boolean }) => Promise<void>;
+  deleteModule: (moduleId: string) => Promise<void>;
   toggleModuleSelection: (moduleId: string) => void;
   clearModuleSelection: () => void;
   calculateSelectedModulesPrice: () => Promise<void>;
@@ -72,6 +74,19 @@ const useModuleStore = create<ModuleStore>((set, get) => ({
       set({ loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+    }
+  },
+  
+  deleteModule: async (moduleId) => {
+    try {
+      set({ loading: true, error: null });
+      await deleteModule(moduleId);
+      // Refresh the modules list after deleting
+      await get().fetchModules();
+      set({ loading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
     }
   },
   

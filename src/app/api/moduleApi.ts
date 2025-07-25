@@ -105,3 +105,14 @@ export const calculateModulePrice = async (moduleIds: string[]) => {
     throw error;
   }
 };
+
+export const deleteModule = async (moduleId: string) => {
+  try {
+    const response = await axiosInstance.delete<SingleModuleResponse>(
+      `/api/v1/module/deleteModule/${moduleId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

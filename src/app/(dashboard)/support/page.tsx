@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Search,
-  Filter,
   Eye,
   MessageCircle,
   Calendar as CalendarIcon,
@@ -57,25 +55,14 @@ const SupportPage = () => {
     totalPages
   } = useSupportStore();
   
-  const [showFilters, setShowFilters] = useState(false);
-  const [searchInput, setSearchInput] = useState(filters.search);
   const [selectedSupportId, setSelectedSupportId] = useState<string | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [selectedSupport, setSelectedSupport] = useState<any>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
-  const handleSearch = () => {
-    setFilters({ search: searchInput });
-    // Reset to the first page when searching
-    fetchSupports({ page: 1, limit: 1 });
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
+  // Search functionality removed
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -158,123 +145,16 @@ const SupportPage = () => {
             <Plus className="h-4 w-4" />
             Create Support
           </Button> */}
-          <div className="relative w-full md:w-80">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search tickets..."
-                  className="pl-8"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                />
-              </div>
-              <Button 
-                onClick={handleSearch}
-                className="shrink-0"
-              >
-                Search
-              </Button>
-            </div>
-          </div>
-          <Button
-            variant={showFilters ? "secondary" : "outline"}
-            className="gap-2"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="h-4 w-4" />
-            {showFilters ? "Hide Filters" : "Show Filters"}
-          </Button>
-          <Button
+          {/* <Button
             variant="outline"
             onClick={() => {
-              setSearchInput('');
               resetFilters();
+              fetchSupports({ page: 1, limit: 1 });
             }}
           >
             Reset Filters
-          </Button>
+          </Button> */}
         </div>
-      </div>
-
-      {/* Filters */}
-      <div className={cn("grid gap-4", !showFilters && "hidden")}>
-        <Card>
-          <CardContent className="p-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
-                <Select
-                  value={filters.status}
-                  onValueChange={(value) => {
-                    setFilters({ status: value });
-                    // Reset to first page when filter changes
-                    fetchSupports({ page: 1, limit: 1 });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Priority</label>
-                <Select
-                  value={filters.priority}
-                  onValueChange={(value) => {
-                    setFilters({ priority: value });
-                    // Reset to first page when filter changes
-                    fetchSupports({ page: 1, limit: 1 });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Priorities</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
-                <Select
-                  value={filters.category}
-                  onValueChange={(value) => {
-                    setFilters({ category: value });
-                    // Reset to first page when filter changes
-                    fetchSupports({ page: 1, limit: 1 });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="technical">Technical</SelectItem>
-                    <SelectItem value="billing">Billing</SelectItem>
-                    <SelectItem value="feature-request">Feature Request</SelectItem>
-                    <SelectItem value="general">General</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Removed date filter since it's not in the current store */}
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Tickets Table */}
@@ -302,7 +182,7 @@ const SupportPage = () => {
             ) : (
               filteredSupports.map((support) => (
                 <TableRow key={support._id}>
-                  <TableCell className="font-medium">{support.ticketId || support._id}</TableCell>
+                  <TableCell className="font-medium">{support.ticketId}</TableCell>
                   <TableCell>{support.userName || 'N/A'}</TableCell>
                   <TableCell>{support.subject}</TableCell>
                   <TableCell>{getPriorityBadge(support.priority)}</TableCell>
@@ -325,6 +205,12 @@ const SupportPage = () => {
                         title="View Support Ticket"
                         onClick={() => {
                           setSelectedSupportId(support._id);
+                          // Check if companyId exists in the old or new format
+                          if (typeof support.companyId === 'object' && support.companyId?._id) {
+                            setSelectedCompanyId(support.companyId._id);
+                          } else if (typeof support.companyId === 'string') {
+                            setSelectedCompanyId(support.companyId);
+                          }
                           setIsViewModalOpen(true);
                         }}
                       >
@@ -379,14 +265,16 @@ const SupportPage = () => {
         }}
       /> */}
 
-      {selectedSupportId && (
+      {selectedSupportId && selectedCompanyId && (
         <ViewSupportModal 
           isOpen={isViewModalOpen} 
           onClose={() => {
             setIsViewModalOpen(false);
             setSelectedSupportId(null);
+            setSelectedCompanyId(null);
           }} 
-          supportId={selectedSupportId} 
+          supportId={selectedSupportId}
+          companyId={selectedCompanyId} 
         />
       )}
 

@@ -19,6 +19,8 @@ interface ContactStore {
   selectedContact: Contact | null;
   filters: {
     search: string;
+    name: string;
+    email: string;
     status: string;
   };
   setFilters: (filters: Partial<ContactStore['filters']>) => void;
@@ -55,6 +57,8 @@ const useContactStore = create<ContactStore>((set, get) => ({
   selectedContact: null,
   filters: {
     search: '',
+    name: '',
+    email: '',
     status: 'all',
   },
   
@@ -68,6 +72,8 @@ const useContactStore = create<ContactStore>((set, get) => ({
     set({
       filters: {
         search: '',
+        name: '',
+        email: '',
         status: 'all',
       }
     });
@@ -80,8 +86,16 @@ const useContactStore = create<ContactStore>((set, get) => ({
       
       // Convert store filters to API filters
       const apiFilters: ContactFilters = {};
+      
+      // Add each filter if it has a value
       if (filters.search) {
         apiFilters.search = filters.search;
+      }
+      if (filters.name) {
+        apiFilters.name = filters.name;
+      }
+      if (filters.email) {
+        apiFilters.email = filters.email;
       }
       if (filters.status && filters.status !== 'all') {
         apiFilters.status = filters.status;

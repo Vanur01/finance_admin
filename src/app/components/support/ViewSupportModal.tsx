@@ -14,22 +14,23 @@ interface ViewSupportModalProps {
   isOpen: boolean;
   onClose: () => void;
   supportId: string;
+  companyId: string;
 }
 
-export default function ViewSupportModal({ isOpen, onClose, supportId }: ViewSupportModalProps) {
+export default function ViewSupportModal({ isOpen, onClose, supportId, companyId }: ViewSupportModalProps) {
   const [support, setSupport] = useState<Support | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchSupportDetails = async () => {
-      if (!supportId) return;
+      if (!supportId || !companyId) return;
       
       setLoading(true);
       setError(null);
       
       try {
-        const response = await getSupportById(supportId);
+        const response = await getSupportById(supportId, companyId);
         setSupport(response.data);
       } catch (err) {
         console.error('Error fetching support details:', err);
@@ -39,10 +40,10 @@ export default function ViewSupportModal({ isOpen, onClose, supportId }: ViewSup
       }
     };
     
-    if (isOpen && supportId) {
+    if (isOpen && supportId && companyId) {
       fetchSupportDetails();
     }
-  }, [isOpen, supportId]);
+  }, [isOpen, supportId, companyId]);
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return '';
@@ -117,7 +118,7 @@ export default function ViewSupportModal({ isOpen, onClose, supportId }: ViewSup
                     <Hash className="w-4 h-4 mr-2 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Ticket ID</span>
                   </div>
-                  <div className="text-lg font-semibold">{support.ticketId}</div>
+                  <div className="text-lg font-semibold">{support.ticket}</div>
                 </div>
                 
                 <div className="mb-6">
@@ -125,10 +126,10 @@ export default function ViewSupportModal({ isOpen, onClose, supportId }: ViewSup
                     <UserCheck className="w-4 h-4 mr-2 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">User Details</span>
                   </div>
-                  <div className="text-base">{support.userName}</div>
+                  <div className="text-base">{support.user.name}</div>
                   <div className="text-sm text-muted-foreground flex items-center mt-1">
                     <Mail className="w-3 h-3 mr-1" />
-                    {support.userEmail}
+                    {support.user.email}
                   </div>
                 </div>
                 
@@ -137,7 +138,7 @@ export default function ViewSupportModal({ isOpen, onClose, supportId }: ViewSup
                     <Building className="w-4 h-4 mr-2 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Company</span>
                   </div>
-                  <div className="text-base">{support.companyName}</div>
+                  <div className="text-base">{support.companyId.companyName}</div>
                 </div>
               </div>
               

@@ -61,6 +61,9 @@ export default function ModulesPage() {
   const [moduleToUpdate, setModuleToUpdate] = useState<Module | null>(null);
   const [moduleToDelete, setModuleToDelete] = useState<Module | null>(null);
   const [isCalculatorModalOpen, setIsCalculatorModalOpen] = useState(false);
+  const [actionType, setActionType] = useState<"deactivate" | "delete">(
+    "deactivate"
+  );
 
   const {
     modules,
@@ -70,6 +73,7 @@ export default function ModulesPage() {
     selectedModuleIds,
     clearModuleSelection,
     updateModule: updateModuleAction,
+    deleteModule,
   } = useModuleStore();
 
   const { toast } = useToast();
@@ -81,16 +85,24 @@ export default function ModulesPage() {
   const handleDelete = async () => {
     if (moduleToDelete) {
       try {
-        await updateModuleAction(moduleToDelete._id, { isActive: false });
-        toast({
-          title: "Module Deactivated",
-          description: `${moduleToDelete.name} has been deactivated successfully.`,
-        });
+        if (actionType === "deactivate") {
+          await updateModuleAction(moduleToDelete._id, { isActive: false });
+          toast({
+            title: "Module Deactivated",
+            description: `${moduleToDelete.name} has been deactivated successfully.`,
+          });
+        } else {
+          await deleteModule(moduleToDelete._id);
+          toast({
+            title: "Module Deleted",
+            description: `${moduleToDelete.name} has been permanently deleted.`,
+          });
+        }
         setModuleToDelete(null);
       } catch (error) {
         toast({
           title: "Error",
-          description: `Failed to deactivate module: ${
+          description: `Failed to ${actionType} module: ${
             (error as Error).message
           }`,
           variant: "destructive",
@@ -269,13 +281,26 @@ export default function ModulesPage() {
                                   </DropdownMenuItem>
                                   {module.isActive && (
                                     <DropdownMenuItem
-                                      className="text-red-600"
-                                      onClick={() => setModuleToDelete(module)}
+                                      className="text-red-500"
+                                      onClick={() => {
+                                        setActionType("deactivate");
+                                        setModuleToDelete(module);
+                                      }}
                                     >
-                                      <Trash className="mr-2 h-4 w-4" />
+                                      <XCircle className="mr-2 h-4 w-4 hover:text-black" />
                                       Deactivate
                                     </DropdownMenuItem>
                                   )}
+                                  <DropdownMenuItem
+                                    className="text-red-700"
+                                    onClick={() => {
+                                      setActionType("delete");
+                                      setModuleToDelete(module);
+                                    }}
+                                  >
+                                    <Trash className="mr-2 h-4 w-4 hover:text-black" />
+                                    Delete Permanently
+                                  </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>
@@ -430,10 +455,23 @@ export default function ModulesPage() {
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     className="text-red-600"
-                                    onClick={() => setModuleToDelete(module)}
+                                    onClick={() => {
+                                      setActionType("deactivate");
+                                      setModuleToDelete(module);
+                                    }}
                                   >
                                     <Trash className="mr-2 h-4 w-4" />
                                     Deactivate
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-red-700"
+                                    onClick={() => {
+                                      setActionType("delete");
+                                      setModuleToDelete(module);
+                                    }}
+                                  >
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Delete Permanently
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -550,6 +588,16 @@ export default function ModulesPage() {
                                     <Edit className="mr-2 h-4 w-4" />
                                     Edit
                                   </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-red-700"
+                                    onClick={() => {
+                                      setActionType("delete");
+                                      setModuleToDelete(module);
+                                    }}
+                                  >
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Delete Permanently
+                                  </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>
@@ -588,21 +636,35 @@ export default function ModulesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center text-red-500">
               <Trash className="h-5 w-5 mr-2" />
-              Confirm Deactivation
+              {actionType === "deactivate"
+                ? "Confirm Deactivation"
+                : "Confirm Deletion"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to deactivate the module
-              <strong> {moduleToDelete?.name}</strong>? This will make it
-              unavailable for purchase.
+              {actionType === "deactivate" ? (
+                <>
+                  Are you sure you want to deactivate the module
+                  <strong> {moduleToDelete?.name}</strong>? This will make it
+                  unavailable for purchase.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to permanently delete the module
+                  <strong> {moduleToDelete?.name}</strong>? This action cannot
+                  be undone.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="cursor-pointer" >Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="cursor-pointer">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-500 hover:bg-red-600 cursor-pointer "
+              className="bg-red-500 hover:bg-red-600 cursor-pointer"
             >
-              Deactivate
+              {actionType === "deactivate" ? "Deactivate" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

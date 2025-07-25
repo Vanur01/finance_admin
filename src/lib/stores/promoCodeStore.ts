@@ -3,6 +3,7 @@ import {
   getAllPromoCodes,
   createPromoCode,
   updatePromoCode,
+  deletePromoCode,
   type PromoCode,
   type PromoCodeFilters,
   type CreatePromoCodeData,
@@ -29,6 +30,7 @@ interface PromoCodeStore {
     promoCodeId: string,
     data: Partial<CreatePromoCodeData>
   ) => Promise<void>;
+  deletePromoCode: (promoCodeId: string) => Promise<void>;
 }
 
 const usePromoCodeStore = create<PromoCodeStore>((set, get) => ({
@@ -101,6 +103,19 @@ const usePromoCodeStore = create<PromoCodeStore>((set, get) => ({
       set({ loading: true, error: null });
       await updatePromoCode(promoCodeId, data);
       // Refresh the promo codes list after updating
+      await get().fetchPromoCodes();
+      set({ loading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
+    }
+  },
+  
+  deletePromoCode: async (promoCodeId) => {
+    try {
+      set({ loading: true, error: null });
+      await deletePromoCode(promoCodeId);
+      // Refresh the promo codes list after deletion
       await get().fetchPromoCodes();
       set({ loading: false });
     } catch (error) {

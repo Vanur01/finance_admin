@@ -3,6 +3,7 @@ import {
   getAllPlans,
   createPlan,
   updatePlan,
+  deletePlan,
   type Plan,
   type PlanFilters,
   type CreatePlanData,
@@ -29,6 +30,7 @@ interface PlanStore {
     planId: string,
     data: Partial<CreatePlanData>
   ) => Promise<void>;
+  deletePlan: (planId: string) => Promise<void>;
 }
 
 const usePlanStore = create<PlanStore>((set, get) => ({
@@ -107,6 +109,20 @@ const usePlanStore = create<PlanStore>((set, get) => ({
       set({ loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+    }
+  },
+  
+  deletePlan: async (planId) => {
+    try {
+      set({ loading: true, error: null });
+      await deletePlan(planId);
+      // Refresh the plans list after deleting
+      const { currentPage } = get();
+      await get().fetchPlans({ page: currentPage });
+      set({ loading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
     }
   },
 }));

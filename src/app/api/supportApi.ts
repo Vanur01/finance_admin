@@ -3,7 +3,7 @@ import axiosInstance from "./AxiosInstance";
 // Types
 export interface Support {
   _id: string;
-  ticketId: string;
+  ticketId: string; // Changed from ticketId to ticket
   subject: string;
   description: string;
   category: "Technical" | "Billing" | "General" | "Feature Request";
@@ -12,11 +12,12 @@ export interface Support {
   reply?: string;
   createdAt: string;
   updatedAt: string;
-  userName: string;
-  userEmail: string;
-  userId: string;
-  companyName: string;
-  companyId: string;
+  userName?: string; 
+  companyId: {
+    _id: string;
+    companyId: string;
+    companyName: string;
+  };
 }
 
 export interface SupportsResponse {
@@ -90,10 +91,10 @@ export const getAllSupports = async (
   }
 };
 
-export const getSupportById = async (id: string) => {
+export const getSupportById = async (id: string, companyId: string) => {
   try {
     const response = await axiosInstance.get<SingleSupportResponse>(
-      `/api/v1/support/getSupportById/${id}`
+      `/api/v1/support/getSupportById/${id}/${companyId}`
     );
     return response.data;
   } catch (error) {

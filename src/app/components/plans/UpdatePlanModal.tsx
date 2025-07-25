@@ -76,12 +76,10 @@ export default function UpdatePlanModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !description || !maxUsers || !maxManagers || (name !== "Free" && selectedModules.length === 0)) {
+    if (!name || !description || !maxUsers || !maxManagers || selectedModules.length === 0) {
       toast({
         title: "Validation Error",
-        description: name !== "Free" 
-          ? "Please fill in all required fields and select at least one module."
-          : "Please fill in all required fields.",
+        description: "Please fill in all required fields and select at least one module.",
         variant: "destructive",
       });
       return;
@@ -112,7 +110,7 @@ export default function UpdatePlanModal({
         isActive,
         maxUsers: maxUsersValue,
         maxManagers: maxManagersValue,
-        modules: name === "Free" ? [] : selectedModules,
+        modules: selectedModules, // Use selected modules for all plan types
       });
 
       toast({
@@ -145,6 +143,7 @@ export default function UpdatePlanModal({
 
   const calculateTotalPrice = (selectedModuleIds: string[] = selectedModules) => {
     if (name === "Free") {
+      // For Free plan, always set price to 0 regardless of selected modules
       setTotalPrice(0);
       return;
     }
@@ -254,18 +253,11 @@ export default function UpdatePlanModal({
             </span>
           </div>
 
-          {name === "Free" ? (
-            <div className="p-4 bg-gray-50 rounded-md border">
-              <p className="text-sm text-center font-medium">
-                Free plan has no modules and zero price
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
+          <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label>Select Modules</Label>
                 <p className="text-sm font-medium">
-                  Total Price: {new Intl.NumberFormat("en-IN", {
+                  Total Price: {name === "Free" ? "Free" : new Intl.NumberFormat("en-IN", {
                     style: "currency",
                     currency: "INR",
                     maximumFractionDigits: 0,
@@ -318,7 +310,6 @@ export default function UpdatePlanModal({
                 </p>
               )}
             </div>
-          )}
 
           <DialogFooter className="mt-6">
             <Button

@@ -98,3 +98,16 @@ export const updatePromoCode = async (
     throw error;
   }
 };
+
+export const deletePromoCode = async (promoCodeId: string) => {
+  try {
+    const response = await axiosInstance.delete<{
+      success: boolean;
+      statusCode: number;
+      message: string;
+    }>(`/api/v1/promocode/deletePromoCodes/${promoCodeId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

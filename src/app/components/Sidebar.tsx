@@ -69,11 +69,11 @@ const navItems: NavItem[] = [
   //   path: '/leads',
   //   icon: <UserPlus className="w-5 h-5" />,
   // },
-  // {
-  //   title: 'Revenue',
-  //   path: '/revenue',
-  //   icon: <DollarSign className="w-5 h-5" />,
-  // },
+  {
+    title: 'Revenue',
+    path: '/revenue',
+    icon: <DollarSign className="w-5 h-5" />,
+  },
   {
     title: 'Companies',
     path: '/companies',
@@ -104,11 +104,11 @@ const navItems: NavItem[] = [
     path: '/plans',
     icon: <FileBarChart className="w-5 h-5" />,
   },
-  // {
-  //   title: 'Promo Codes',
-  //   path: '/promocodes',
-  //   icon: <Tag className="w-5 h-5" />,
-  // },
+  {
+    title: 'Promo Codes',
+    path: '/promocodes',
+    icon: <Tag className="w-5 h-5" />,
+  },
 ];
 
 

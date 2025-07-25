@@ -71,12 +71,10 @@ export default function CreatePlanModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !description || !maxUsers || !maxManagers || (name !== "Free" && selectedModules.length === 0)) {
+    if (!name || !description || !maxUsers || !maxManagers || selectedModules.length === 0) {
       toast({
         title: "Validation Error",
-        description: name !== "Free" 
-          ? "Please fill in all required fields and select at least one module."
-          : "Please fill in all required fields.",
+        description: "Please fill in all required fields and select at least one module.",
         variant: "destructive",
       });
       return;
@@ -107,7 +105,7 @@ export default function CreatePlanModal({
         isActive: true,
         maxUsers: maxUsersValue,
         maxManagers: maxManagersValue,
-        modules: name === "Free" ? [] : selectedModules,
+        modules: selectedModules, // Use selected modules for all plan types
       });
 
       toast({
@@ -140,6 +138,7 @@ export default function CreatePlanModal({
 
   const calculateTotalPrice = (selectedModuleIds: string[] = selectedModules) => {
     if (name === "Free") {
+      // Always set price to 0 for Free plan regardless of selected modules
       setTotalPrice(0);
       return;
     }
@@ -157,15 +156,12 @@ export default function CreatePlanModal({
     calculateTotalPrice();
   }, [modules, name]);
 
-  const activeModules = modules.filter((module) => module.isActive);
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             Create New Plan
-         
           </DialogTitle>
         </DialogHeader>
 
@@ -227,18 +223,11 @@ export default function CreatePlanModal({
             </div>
           </div>
 
-          {name === "Free" ? (
-            <div className="p-4 bg-gray-50 rounded-md border">
-              <p className="text-sm text-center font-medium">
-                Free plan has no modules and zero price
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
+          <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label>Select Modules</Label>
                 <p className="text-sm font-medium">
-                  Total Price: {new Intl.NumberFormat("en-IN", {
+                  Total Price: {name === "Free" ? "Free" : new Intl.NumberFormat("en-IN", {
                     style: "currency",
                     currency: "INR",
                     maximumFractionDigits: 0,
@@ -246,12 +235,12 @@ export default function CreatePlanModal({
                 </p>
               </div>
               <div className="border rounded-md p-4 space-y-2 max-h-60 overflow-y-auto">
-                {activeModules.length === 0 ? (
+                {modules.length === 0 ? (
                   <p className="text-sm text-muted-foreground py-2 text-center">
-                    No active modules available
+                    No modules available
                   </p>
                 ) : (
-                  activeModules.map((module) => (
+                  modules.map((module) => (
                     <div
                       key={module._id}
                       className="flex items-center space-x-2 py-2 border-b last:border-0"
@@ -260,16 +249,18 @@ export default function CreatePlanModal({
                         id={`module-${module._id}`}
                         checked={selectedModules.includes(module._id)}
                         onCheckedChange={() => toggleModuleSelection(module._id)}
+                        disabled={!module.isActive}
                       />
                       <div className="flex flex-col">
                         <Label
                           htmlFor={`module-${module._id}`}
-                          className="font-medium cursor-pointer"
+                          className={`font-medium cursor-pointer ${!module.isActive && "text-gray-400"}`}
                         >
                           {module.name}
                         </Label>
-                        <span className="text-xs text-muted-foreground">
+                        <span className={`text-xs ${!module.isActive ? "text-gray-400" : "text-muted-foreground"}`}>
                           {module.description}
+                          {!module.isActive && " (Inactive)"}
                         </span>
                       </div>
                       <div className="ml-auto text-sm font-medium">
@@ -289,7 +280,7 @@ export default function CreatePlanModal({
                 </p>
               )}
             </div>
-          )}
+        
 
           <DialogFooter className="mt-6">
             <Button

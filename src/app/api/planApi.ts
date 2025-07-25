@@ -108,3 +108,14 @@ export const updatePlan = async (
     throw error;
   }
 };
+
+export const deletePlan = async (planId: string) => {
+  try {
+    const response = await axiosInstance.delete<SinglePlanResponse>(
+      `/api/v1/plan/deletePlan/${planId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

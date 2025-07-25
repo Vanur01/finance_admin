@@ -51,14 +51,21 @@ import {
 
 export default function PromoCodesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [promoCodeToUpdate, setPromoCodeToUpdate] = useState<PromoCode | null>(null);
-  const [promoCodeToDeactivate, setPromoCodeToDeactivate] = useState<PromoCode | null>(null);
+  const [promoCodeToUpdate, setPromoCodeToUpdate] = useState<PromoCode | null>(
+    null
+  );
+  const [promoCodeToDeactivate, setPromoCodeToDeactivate] =
+    useState<PromoCode | null>(null);
+  const [promoCodeToDelete, setPromoCodeToDelete] = useState<PromoCode | null>(
+    null
+  );
 
   const {
     promoCodes,
     loading,
     fetchPromoCodes,
     updatePromoCode,
+    deletePromoCode,
     total,
   } = usePromoCodeStore();
 
@@ -80,7 +87,30 @@ export default function PromoCodesPage() {
       } catch (error) {
         toast({
           title: "Error",
-          description: `Failed to deactivate promo code: ${(error as Error).message}`,
+          description: `Failed to deactivate promo code: ${
+            (error as Error).message
+          }`,
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleDelete = async () => {
+    if (promoCodeToDelete) {
+      try {
+        await deletePromoCode(promoCodeToDelete._id);
+        toast({
+          title: "Promo Code Deleted",
+          description: `${promoCodeToDelete.promocode} has been permanently deleted.`,
+        });
+        setPromoCodeToDelete(null);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: `Failed to delete promo code: ${
+            (error as Error).message
+          }`,
           variant: "destructive",
         });
       }
@@ -88,10 +118,10 @@ export default function PromoCodesPage() {
   };
 
   const formatExpiryDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -157,10 +187,7 @@ export default function PromoCodesPage() {
                 <TableBody>
                   {promoCodes.length === 0 ? (
                     <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="h-24 text-center"
-                      >
+                      <TableCell colSpan={5} className="h-24 text-center">
                         No promo codes found
                       </TableCell>
                     </TableRow>
@@ -171,16 +198,25 @@ export default function PromoCodesPage() {
                           {promoCode.promocode}
                         </TableCell>
                         <TableCell>
-                          {formatDiscount(promoCode.discount, promoCode.discountType)}
+                          {formatDiscount(
+                            promoCode.discount,
+                            promoCode.discountType
+                          )}
                           <span className="text-xs ml-1 text-muted-foreground">
-                            ({promoCode.discountType === "percentage" ? "percentage" : "fixed amount"})
+                            (
+                            {promoCode.discountType === "percentage"
+                              ? "percentage"
+                              : "fixed amount"}
+                            )
                           </span>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
                             <span>{formatExpiryDate(promoCode.expiresAt)}</span>
                             {isExpired(promoCode.expiresAt) && (
-                              <span className="text-xs text-red-500">Expired</span>
+                              <span className="text-xs text-red-500">
+                                Expired
+                              </span>
                             )}
                           </div>
                         </TableCell>
@@ -206,10 +242,7 @@ export default function PromoCodesPage() {
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                className="h-8 w-8 p-0"
-                              >
+                              <Button variant="ghost" className="h-8 w-8 p-0">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -223,12 +256,21 @@ export default function PromoCodesPage() {
                               {promoCode.isActive && (
                                 <DropdownMenuItem
                                   className="text-red-600"
-                                  onClick={() => setPromoCodeToDeactivate(promoCode)}
+                                  onClick={() =>
+                                    setPromoCodeToDeactivate(promoCode)
+                                  }
                                 >
-                                  <Trash className="mr-2 h-4 w-4" />
+                                  <XCircle className="mr-2 h-4 w-4 hover:text-black" />
                                   Deactivate
                                 </DropdownMenuItem>
                               )}
+                              <DropdownMenuItem
+                                className="text-red-700"
+                                onClick={() => setPromoCodeToDelete(promoCode)}
+                              >
+                                <Trash className="mr-2 h-4 w-4 hover:text-black" />
+                                Delete Permanently
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -263,22 +305,51 @@ export default function PromoCodesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center text-red-500">
-              <Trash className="h-5 w-5 mr-2" />
+            <AlertDialogTitle className="flex items-center text-amber-500">
+              <XCircle className="h-5 w-5 mr-2" />
               Confirm Deactivation
             </AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to deactivate the promo code
-              <strong> {promoCodeToDeactivate?.promocode}</strong>? Users will no longer be able to use this code.
+              <strong> {promoCodeToDeactivate?.promocode}</strong>? Users will
+              no longer be able to use this code.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeactivate}
-              className="bg-red-500 hover:bg-red-600"
+              className="bg-amber-500 hover:bg-amber-600"
             >
               Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!promoCodeToDelete}
+        onOpenChange={() => setPromoCodeToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center text-red-500">
+              <Trash className="h-5 w-5 mr-2" />
+              Confirm Deletion
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              promo code
+              <strong> {promoCodeToDelete?.promocode}</strong> from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

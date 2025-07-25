@@ -19,6 +19,7 @@ import {
   Headset,
   PhoneCall,
   Building,
+  Package,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -90,6 +91,11 @@ const navItems: NavItem[] = [
     title: 'Contacts',
     path: '/contacts',
     icon: <PhoneCall className="w-5 h-5" />,
+  },
+  {
+    title: 'Modules',
+    path: '/modules',
+    icon: <Package className="w-5 h-5" />,
   },
 ];
 

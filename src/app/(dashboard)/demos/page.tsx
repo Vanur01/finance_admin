@@ -69,7 +69,7 @@ interface DemoFilters {
   };
 }
 
-export const getStatusIcon = (status: Demo["status"]) => {
+const getStatusIcon = (status: Demo["status"]) => {
   switch (status) {
     case "scheduled":
       return <Clock className="w-4 h-4 text-blue-500" />;
@@ -80,7 +80,7 @@ export const getStatusIcon = (status: Demo["status"]) => {
   }
 };
 
-export const getStatusText = (status: Demo["status"]) => {
+const getStatusText = (status: Demo["status"]) => {
   switch (status) {
     case "scheduled":
       return "Scheduled";

@@ -156,10 +156,10 @@ export default function CreateContactModal({ isOpen, onClose }: CreateContactMod
           </div>
         </div>
         <DialogFooter className="pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} className='cursor-pointer'>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={loading} className="ml-2">
+          <Button onClick={handleSubmit} disabled={loading} className="ml-2 cursor-pointer">
             {loading ? "Creating..." : "Create Contact"}
           </Button>
         </DialogFooter>

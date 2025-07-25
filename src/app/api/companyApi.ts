@@ -1,11 +1,33 @@
 import axiosInstance from "./AxiosInstance";
 
 // Types
+export interface Manager {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
 export interface Company {
+  _id: string;
   companyId: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  role: string;
   companyName: string;
+  companyUniqueId: string;
   industry: string;
   size: string;
+  managers: Manager[];
+  users: User[];
 }
 
 export interface CompanyListResponse {
@@ -24,9 +46,7 @@ export interface CompanyDetailsResponse {
   success: boolean;
   statusCode: number;
   message: string;
-  result: {
-    company: Company;
-  };
+  result: Company;
 }
 
 // API Functions

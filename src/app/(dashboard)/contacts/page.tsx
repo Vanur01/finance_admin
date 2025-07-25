@@ -6,6 +6,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import {
   Table,
@@ -60,21 +61,23 @@ import CreateContactModal from "@/app/components/contacts/CreateContactModal";
 import { Contact } from "@/app/api/contact";
 
 export default function ContactsPage() {
-  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(
+    null
+  );
   const [contactToUpdate, setContactToUpdate] = useState<Contact | null>(null);
   const [deleteContact, setDeleteContact] = useState<Contact | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const { 
-    contacts, 
-    loading, 
-    total, 
+  const {
+    contacts,
+    loading,
+    total,
     totalPages,
-    currentPage, 
-    fetchContacts, 
+    currentPage,
+    fetchContacts,
     deleteContact: deleteContactAction,
     filters,
     setFilters,
-    resetFilters
+    resetFilters,
   } = useContactStore();
 
   useEffect(() => {
@@ -105,28 +108,57 @@ export default function ContactsPage() {
     }
   };
 
-const formatDate = (dateString: string | undefined) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true
-  });
-};
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+  };
 
   // We're now using the contacts directly from the store
   // as filtering is done on the server side
-  
+
   return (
     <div className="container mx-auto py-10">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Contacts Management</h1>
+        <div className="flex space-x-2">
+          {/* {selectedModuleIds.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setIsCalculatorModalOpen(true)}
+              className="flex items-center cursor-pointer"
+            >
+              <Calculator className="mr-2 h-4 w-4" />
+              Calculate Price ({selectedModuleIds.length})
+            </Button>
+          )} */}
+
+          <Button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="ml-2 cursor-pointer"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Contact
+          </Button>
+        </div>
+      </div>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Contacts</CardTitle>
+          <div>
+          <CardTitle className="flex items-center">Contacts</CardTitle>
+          <CardDescription>
+            View and manage all available modules
+          </CardDescription>
+          </div>
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -136,16 +168,16 @@ const formatDate = (dateString: string | undefined) => {
                 value={filters.search}
                 onChange={(e) => setFilters({ search: e.target.value })}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     fetchContacts({ page: 1 });
                   }
                 }}
               />
               {filters.search && (
-                <X 
-                  className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer" 
+                <X
+                  className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
                   onClick={() => {
-                    setFilters({ search: '' });
+                    setFilters({ search: "" });
                     fetchContacts({ page: 1 });
                   }}
                 />
@@ -167,10 +199,6 @@ const formatDate = (dateString: string | undefined) => {
                 <SelectItem value="converted">Converted</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={() => setIsCreateModalOpen(true)} className="ml-2">
-              <Plus className="h-4 w-4 mr-2" />
-              New Contact
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -193,7 +221,9 @@ const formatDate = (dateString: string | undefined) => {
                   <TableBody>
                     {contacts.map((contact) => (
                       <TableRow key={contact._id}>
-                        <TableCell className="font-medium">{contact.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {contact.name}
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center text-sm text-muted-foreground">
                             <Mail className="w-4 h-4 mr-2" />
@@ -223,13 +253,21 @@ const formatDate = (dateString: string | undefined) => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setSelectedContactId(contact._id)}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setSelectedContactId(contact._id)
+                                }
+                              >
                                 View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setContactToUpdate(contact)}>
+                              <DropdownMenuItem
+                                onClick={() => setContactToUpdate(contact)}
+                              >
                                 Update Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setDeleteContact(contact)}>
+                              <DropdownMenuItem
+                                onClick={() => setDeleteContact(contact)}
+                              >
                                 Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -243,16 +281,16 @@ const formatDate = (dateString: string | undefined) => {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex flex-col items-center justify-center py-4 border-t gap-2 mt-6">
-                  <Pagination 
-                    currentPage={currentPage} 
-                    totalPages={totalPages} 
-                    onPageChange={handlePageChange} 
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
                     isLoading={loading}
                     showFirstLast={true}
                     className="mt-2"
                   />
                   <div className="text-sm text-muted-foreground">
-                    Showing page {currentPage} of {totalPages} ({total} total contacts)
+                    Showing page {currentPage} of {totalPages}
                   </div>
                 </div>
               )}
@@ -277,7 +315,10 @@ const formatDate = (dateString: string | undefined) => {
         />
       )}
 
-      <AlertDialog open={!!deleteContact} onOpenChange={() => setDeleteContact(null)}>
+      <AlertDialog
+        open={!!deleteContact}
+        onOpenChange={() => setDeleteContact(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center text-red-500">
@@ -285,20 +326,24 @@ const formatDate = (dateString: string | undefined) => {
               Confirm Deletion
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the contact
+              This action cannot be undone. This will permanently delete the
+              contact
               <strong> {deleteContact?.name}</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
-      <CreateContactModal 
+
+      <CreateContactModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
       />

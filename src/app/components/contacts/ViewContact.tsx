@@ -137,7 +137,7 @@ const formatDate = (dateString: string | undefined) => {
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={onClose}>
+              <Button variant="outline" onClick={onClose} className='cursor-pointer'>
                 Close
               </Button>
             </div>
@@ -145,7 +145,7 @@ const formatDate = (dateString: string | undefined) => {
         ) : (
           <div className="py-12 text-center">
             <p className="text-muted-foreground">No contact details available</p>
-            <Button variant="outline" onClick={onClose} className="mt-4">
+            <Button variant="outline" onClick={onClose} className="mt-4 cursor-pointer">
               Close
             </Button>
           </div>

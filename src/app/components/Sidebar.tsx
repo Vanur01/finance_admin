@@ -20,6 +20,8 @@ import {
   PhoneCall,
   Building,
   Package,
+  FileBarChart,
+  Tag,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -97,6 +99,16 @@ const navItems: NavItem[] = [
     path: '/modules',
     icon: <Package className="w-5 h-5" />,
   },
+  {
+    title: 'Plans',
+    path: '/plans',
+    icon: <FileBarChart className="w-5 h-5" />,
+  },
+  // {
+  //   title: 'Promo Codes',
+  //   path: '/promocodes',
+  //   icon: <Tag className="w-5 h-5" />,
+  // },
 ];
 
 

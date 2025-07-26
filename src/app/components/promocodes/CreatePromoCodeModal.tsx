@@ -36,6 +36,7 @@ export default function CreatePromoCodeModal({
   const [promocode, setPromocode] = useState("");
   const [discount, setDiscount] = useState("");
   const [discountType, setDiscountType] = useState<DiscountType>("fixed");
+  const [maxUses, setMaxUses] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,7 +47,7 @@ export default function CreatePromoCodeModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!promocode || !discount || !expiresAt) {
+    if (!promocode || !discount || !expiresAt || !maxUses) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields.",
@@ -75,12 +76,23 @@ export default function CreatePromoCodeModal({
       return;
     }
 
+    const maxUsesValue = parseInt(maxUses, 10);
+    if (isNaN(maxUsesValue) || maxUsesValue <= 0) {
+      toast({
+        title: "Invalid Input",
+        description: "Max Uses must be a positive integer.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await addPromoCode({
         promocode: promocode.toUpperCase(),
         discount: discountValue,
         discountType,
+        maxUses: maxUsesValue,
         expiresAt: new Date(expiresAt).toISOString(),
         isActive,
       });
@@ -106,6 +118,7 @@ export default function CreatePromoCodeModal({
     setPromocode("");
     setDiscount("");
     setDiscountType("fixed");
+    setMaxUses("");
     setExpiresAt("");
     setIsActive(true);
   };
@@ -149,7 +162,6 @@ export default function CreatePromoCodeModal({
                 onChange={(e) => setDiscount(e.target.value)}
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="discountType">Discount Type</Label>
               <Select
@@ -166,6 +178,17 @@ export default function CreatePromoCodeModal({
               </Select>
             </div>
           </div>
+           <div className="space-y-2">
+              <Label htmlFor="maxUses">Max Uses</Label>
+              <Input
+                id="maxUses"
+                type="number"
+                min="1"
+                placeholder="5"
+                value={maxUses}
+                onChange={(e) => setMaxUses(e.target.value)}
+              />
+            </div>
 
           <div className="space-y-2">
             <Label htmlFor="expiresAt">Expiry Date</Label>

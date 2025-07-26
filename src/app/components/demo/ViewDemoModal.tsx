@@ -1,109 +1,151 @@
-import { X } from 'lucide-react'
-import { DateTime } from 'luxon'
-import { useEffect, useState } from 'react'
+"use client";
+
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogClose,
-} from "@/components/ui/dialog"
-import { getStatusIcon, getStatusText } from '@/app/utils/demoStatusUtils'
-import { getBookingById, type Booking } from '@/app/api/demoApi'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, Mail, Phone, FileText, User } from "lucide-react";
 
-interface Demo {
-  id: string
-  clientName: string
-  email: string
-  phoneNumber: string
-  dateTime: DateTime
-  module: string
-  status: 'scheduled' | 'rescheduled' | 'cancelled' | 'done' | 'missed'
-  notes: string | null
-}
+import useDemoStore from "@/lib/stores/demoStore";
+import { Demo } from "@/app/api/demoApi";
 
 interface ViewDemoModalProps {
-  demo: Demo | null
-  onClose: () => void
-  isLoading?: boolean
+  isOpen: boolean;
+  onClose: () => void;
+  demoId: string;
 }
 
-// Get the selected booking from the store
-import useDemoStore from '@/lib/stores/demoStore';
-
-export const ViewDemoModal = ({ demo, onClose, isLoading = false }: ViewDemoModalProps) => {
-  const [bookingData, setBookingData] = useState<Booking | null>(null);
-  const [loading, setLoading] = useState(false);
+const ViewDemoModal = ({ isOpen, onClose, demoId }: ViewDemoModalProps) => {
+  const { fetchDemoById } = useDemoStore();
+  const { toast } = useToast();
+  const [demo, setDemo] = useState<Demo | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (demo?.id) {
+    const loadDemo = async () => {
+      try {
         setLoading(true);
-        try {
-          const response = await getBookingById(demo.id);
-          setBookingData(response.result);
-        } catch (error) {
-          console.error('Error fetching booking:', error);
-        } finally {
-          setLoading(false);
-        }
+        const demoData = await fetchDemoById(demoId);
+        setDemo(demoData);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: `Failed to load demo details: ${(error as Error).message}`,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchData();
-  }, [demo?.id]);
+    if (isOpen && demoId) {
+      loadDemo();
+    }
+  }, [isOpen, demoId, fetchDemoById, toast]);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "scheduled":
+        return <Badge className="bg-blue-500 hover:bg-blue-600">Scheduled</Badge>;
+      case "rescheduled":
+        return <Badge className="bg-amber-500 hover:bg-amber-600">Rescheduled</Badge>;
+      case "cancelled":
+        return <Badge className="bg-red-500 hover:bg-red-600">Cancelled</Badge>;
+      case "done":
+        return <Badge className="bg-green-500 hover:bg-green-600">Completed</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
 
   return (
-    <Dialog open={!!demo} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Demo Details</DialogTitle>
-          <DialogClose className="absolute right-4 top-4">
-            <X className="h-4 w-4" />
-          </DialogClose>
+          <DialogDescription>
+            View the details of this scheduled demonstration.
+          </DialogDescription>
         </DialogHeader>
+
         {loading ? (
-          <div className="py-8 text-center">Loading demo details...</div>
-        ) : bookingData ? (
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="font-medium">Name:</div>
-              <div className="col-span-3">{bookingData.name}</div>
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-3">Loading...</span>
+          </div>
+        ) : demo ? (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium flex items-center">
+                <User className="mr-2 h-5 w-5" />
+                {demo.name}
+              </h3>
+              <div>{getStatusBadge(demo.status)}</div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="font-medium">Email:</div>
-              <div className="col-span-3">{bookingData.email}</div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="font-medium">Phone:</div>
-              <div className="col-span-3">{bookingData.mobile}</div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="font-medium">Date:</div>
-              <div className="col-span-3">
-                {DateTime.fromISO(bookingData.scheduledAt).toFormat('MMM d, yyyy h:mm a')}
+
+            <div className="space-y-3">
+              <div className="flex items-center text-sm">
+                <Mail className="mr-2 h-4 w-4" />
+                <span className="text-muted-foreground">Email:</span>
+                <span className="ml-2">{demo.email}</span>
               </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="font-medium">Status:</div>
-              <div className="col-span-3 flex items-center">
-                {getStatusIcon(bookingData.status)}
-                <span className="ml-2">{getStatusText(bookingData.status)}</span>
+
+              <div className="flex items-center text-sm">
+                <Phone className="mr-2 h-4 w-4" />
+                <span className="text-muted-foreground">Mobile:</span>
+                <span className="ml-2">{demo.mobile}</span>
               </div>
-            </div>
-            {bookingData.notes && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <div className="font-medium">Notes:</div>
-                <div className="col-span-3">{bookingData.notes}</div>
+
+              <div className="flex items-center text-sm">
+                <Calendar className="mr-2 h-4 w-4" />
+                <span className="text-muted-foreground">Date:</span>
+                <span className="ml-2">
+                  {format(new Date(demo.scheduledAt), "PPP")}
+                </span>
               </div>
-            )}
+
+              <div className="flex items-center text-sm">
+                <Clock className="mr-2 h-4 w-4" />
+                <span className="text-muted-foreground">Time:</span>
+                <span className="ml-2">
+                  {format(new Date(demo.scheduledAt), "p")}
+                </span>
+              </div>
+
+              {demo.notes && (
+                <div className="pt-3">
+                  <div className="flex items-center text-sm mb-2">
+                    <FileText className="mr-2 h-4 w-4" />
+                    <span className="text-muted-foreground">Notes:</span>
+                  </div>
+                  <div className="bg-muted p-3 rounded-md text-sm">
+                    {demo.notes}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
-          <div className="py-8 text-center">No demo details available</div>
+          <div className="text-center py-6 text-muted-foreground">
+            Demo details not found
+          </div>
         )}
 
-        
+        <DialogFooter>
+          <Button onClick={onClose}>Close</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
+
+export default ViewDemoModal;

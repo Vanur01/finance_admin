@@ -8,6 +8,7 @@ export interface PromoCode {
   promocode: string;
   discount: number;
   discountType: DiscountType;
+  maxUses: number;
   expiresAt: string;
   isActive: boolean;
   __v?: number;
@@ -36,6 +37,7 @@ export interface CreatePromoCodeData {
   promocode: string;
   discount: number;
   discountType: DiscountType;
+  maxUses: number;
   expiresAt: string;
   isActive: boolean;
 }

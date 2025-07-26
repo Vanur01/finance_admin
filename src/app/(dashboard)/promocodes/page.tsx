@@ -179,6 +179,7 @@ export default function PromoCodesPage() {
                   <TableRow>
                     <TableHead>Promo Code</TableHead>
                     <TableHead>Discount</TableHead>
+                    <TableHead>Max Uses</TableHead>
                     <TableHead>Expiry Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -209,6 +210,9 @@ export default function PromoCodesPage() {
                               : "fixed amount"}
                             )
                           </span>
+                        </TableCell>
+                        <TableCell>
+                          {promoCode.maxUses}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">

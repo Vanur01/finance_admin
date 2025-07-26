@@ -1,77 +1,101 @@
 import { create } from "zustand";
-import { 
-  getAllBookings, 
-  getBookingById, 
-  deleteBooking,
-  updateBooking,
-  rescheduleBooking,
-  cancelBooking,
-  completeBooking,
-  type Booking,
-  type BookingFilters 
+import {
+  getAllDemos,
+  getDemoById,
+  createDemo,
+  updateDemo,
+  deleteDemo,
+  rescheduleDemo,
+  cancelDemo,
+  completeDemo,
+  type Demo,
+  type DemoFilters,
+  type CreateDemoData,
+  type UpdateDemoData,
 } from "@/app/api/demoApi";
 
 interface DemoStore {
-  bookings: Booking[];
+  demos: Demo[];
   loading: boolean;
   error: string | null;
   total: number;
-  page: number;
+  currentPage: number;
   totalPages: number;
-  selectedBooking: Booking | null;
-  filters: BookingFilters;
-  fetchBookings: (params: { page?: number; limit?: number }) => Promise<void>;
-  fetchBookingById: (bookingId: string) => Promise<void>;
-  deleteBooking: (bookingId: string) => Promise<void>;
-  updateBooking: (bookingId: string, data: { name: string; email: string; mobile: string; scheduledAt: string }) => Promise<void>;
-  rescheduleBooking: (bookingId: string, scheduledAt: string) => Promise<void>;
-  cancelBooking: (bookingId: string, reason: string) => Promise<void>;
-  completeBooking: (bookingId: string) => Promise<void>;
-  setFilters: (newFilters: Partial<BookingFilters>) => void;
+  selectedDemo: Demo | null;
+  filters: {
+    name: string;
+    email: string;
+    mobile: string;
+    status: string;
+    scheduledAt: string;
+  };
+
+  // Actions
+  setFilters: (filters: Partial<DemoStore["filters"]>) => void;
   resetFilters: () => void;
+  fetchDemos: (params?: { page?: number; limit?: number }) => Promise<void>;
+  fetchDemoById: (demoId: string) => Promise<Demo>;
+  addDemo: (data: CreateDemoData) => Promise<void>;
+  updateDemo: (demoId: string, data: UpdateDemoData) => Promise<void>;
+  deleteDemo: (demoId: string) => Promise<void>;
+  rescheduleDemo: (demoId: string, scheduledAt: string) => Promise<void>;
+  cancelDemo: (demoId: string, reason: string) => Promise<void>;
+  completeDemo: (demoId: string) => Promise<void>;
+  setSelectedDemo: (demo: Demo | null) => void;
 }
 
 const useDemoStore = create<DemoStore>((set, get) => ({
-  bookings: [],
+  demos: [],
   loading: false,
   error: null,
   total: 0,
-  page: 1,
+  currentPage: 1,
   totalPages: 1,
-  selectedBooking: null,
+  selectedDemo: null,
   filters: {
-    name: '',
-    email: '',
-    scheduledAt: '',
-    status: ''
+    name: "",
+    email: "",
+    mobile: "",
+    status: "",
+    scheduledAt: "",
   },
 
-  setFilters: (newFilters: Partial<BookingFilters>) => {
+  setFilters: (newFilters) => {
     set((state) => ({
-      filters: { ...state.filters, ...newFilters }
+      filters: { ...state.filters, ...newFilters },
     }));
   },
 
   resetFilters: () => {
     set({
       filters: {
-        name: '',
-        email: '',
-        scheduledAt: '',
-        status: ''
-      }
+        name: "",
+        email: "",
+        mobile: "",
+        status: "",
+        scheduledAt: "",
+      },
     });
   },
 
-  fetchBookings: async ({ page = 1, limit = 10 }) => {
+  fetchDemos: async ({ page = 1, limit = 10 } = {}) => {
     try {
       set({ loading: true, error: null });
       const filters = get().filters;
-      const response = await getAllBookings(page, limit, filters);
+
+      // Convert store filters to API filters
+      const apiFilters: DemoFilters = {};
+      if (filters.name) apiFilters.name = filters.name;
+      if (filters.email) apiFilters.email = filters.email;
+      if (filters.mobile) apiFilters.mobile = filters.mobile;
+      if (filters.status && filters.status !== 'all') apiFilters.status = filters.status;
+      if (filters.scheduledAt) apiFilters.scheduledAt = filters.scheduledAt;
+
+      const response = await getAllDemos(page, limit, apiFilters);
       set({
-        bookings: response.result.results,
+        demos: response.result.results,
         total: response.result.total,
-        page: response.result.page,
+        currentPage: response.result.page,
         totalPages: response.result.totalPages,
         loading: false,
       });
@@ -80,78 +104,99 @@ const useDemoStore = create<DemoStore>((set, get) => ({
     }
   },
 
-  fetchBookingById: async (bookingId: string) => {
+  fetchDemoById: async (demoId) => {
     try {
       set({ loading: true, error: null });
-      const response = await getBookingById(bookingId);
-      set({ selectedBooking: response.result, loading: false });
+      const response = await getDemoById(demoId);
+      const demo = response.result;
+      set({ loading: false });
+      return demo;
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+      throw error;
     }
   },
 
-  deleteBooking: async (bookingId: string) => {
+  addDemo: async (data) => {
     try {
       set({ loading: true, error: null });
-      await deleteBooking(bookingId);
-      // Refresh the bookings list after deletion
-      const currentPage = useDemoStore.getState().page;
-      await useDemoStore.getState().fetchBookings({ page: currentPage });
+      await createDemo(data);
+      // Refresh the demo list after creating a new demo
+      await get().fetchDemos({ page: 1 });
+      set({ loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+      throw error;
     }
   },
 
-  updateBooking: async (bookingId: string, data: { name: string; email: string; mobile: string; scheduledAt: string }) => {
+  updateDemo: async (demoId, data) => {
     try {
       set({ loading: true, error: null });
-      await updateBooking(bookingId, data);
-      // Refresh the booking details and list after update
-      await useDemoStore.getState().fetchBookingById(bookingId);
-      const currentPage = useDemoStore.getState().page;
-      await useDemoStore.getState().fetchBookings({ page: currentPage });
+      await updateDemo(demoId, data);
+      // Refresh the demo list after updating
+      await get().fetchDemos();
+      set({ loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+      throw error;
     }
   },
 
-  rescheduleBooking: async (bookingId: string, scheduledAt: string) => {
+  deleteDemo: async (demoId) => {
     try {
       set({ loading: true, error: null });
-      await rescheduleBooking(bookingId, scheduledAt);
-      // Refresh the booking details and list after rescheduling
-      await useDemoStore.getState().fetchBookingById(bookingId);
-      const currentPage = useDemoStore.getState().page;
-      await useDemoStore.getState().fetchBookings({ page: currentPage });
+      await deleteDemo(demoId);
+      // Refresh the demo list after deletion
+      await get().fetchDemos();
+      set({ loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+      throw error;
     }
   },
 
-  cancelBooking: async (bookingId: string, reason: string) => {
+  rescheduleDemo: async (demoId, scheduledAt) => {
     try {
       set({ loading: true, error: null });
-      await cancelBooking(bookingId, reason);
-      // Refresh the booking details and list after cancellation
-      await useDemoStore.getState().fetchBookingById(bookingId);
-      const currentPage = useDemoStore.getState().page;
-      await useDemoStore.getState().fetchBookings({ page: currentPage });
+      await rescheduleDemo(demoId, scheduledAt);
+      // Refresh the demo list after rescheduling
+      await get().fetchDemos();
+      set({ loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+      throw error;
     }
   },
 
-  completeBooking: async (bookingId: string) => {
+  cancelDemo: async (demoId, reason) => {
     try {
       set({ loading: true, error: null });
-      await completeBooking(bookingId);
-      // Refresh the booking details and list after completion
-      await useDemoStore.getState().fetchBookingById(bookingId);
-      const currentPage = useDemoStore.getState().page;
-      await useDemoStore.getState().fetchBookings({ page: currentPage });
+      await cancelDemo(demoId, reason);
+      // Refresh the demo list after cancellation
+      await get().fetchDemos();
+      set({ loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+      throw error;
     }
+  },
+
+  completeDemo: async (demoId) => {
+    try {
+      set({ loading: true, error: null });
+      await completeDemo(demoId);
+      // Refresh the demo list after completion
+      await get().fetchDemos();
+      set({ loading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
+    }
+  },
+
+  setSelectedDemo: (demo) => {
+    set({ selectedDemo: demo });
   },
 }));
 

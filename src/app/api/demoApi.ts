@@ -1,17 +1,20 @@
-import  axiosInstance  from "./AxiosInstance";
+import axiosInstance from "./AxiosInstance";
 
 // Types
-export interface Booking {
+export type BookingStatus = "scheduled" | "rescheduled" | "cancelled" | "done";
+
+export interface Demo {
   _id: string;
   name: string;
   email: string;
   mobile: string;
-  status: "scheduled" | "rescheduled" | "cancelled" | "done";
+  status: BookingStatus;
   scheduledAt: string;
   notes: string | null;
+  __v?: number;
 }
 
-export interface BookingsResponse {
+export interface DemosResponse {
   success: boolean;
   statusCode: number;
   message: string;
@@ -19,69 +22,88 @@ export interface BookingsResponse {
     total: number;
     page: number;
     totalPages: number;
-    results: Booking[];
+    results: Demo[];
   };
 }
 
-export interface SingleBookingResponse {
+export interface SingleDemoResponse {
   success: boolean;
   statusCode: number;
   message: string;
-  result: Booking;
+  result: Demo;
 }
 
-// API Functions
-export const createBooking = async (data: {
+export interface CreateDemoData {
   name: string;
   email: string;
   mobile: string;
   scheduledAt: string;
-}) => {
-  try {
-    const response = await axiosInstance.post<SingleBookingResponse>(
-      '/api/v1/user/createBooking',
-      data
-    );
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
+  notes?: string | null;
+}
 
-export interface BookingFilters {
+export interface UpdateDemoData {
   name?: string;
   email?: string;
+  mobile?: string;
+  scheduledAt?: string;
+  notes?: string | null;
+  status?: BookingStatus;
+}
+
+export interface DemoFilters {
+  name?: string;
+  email?: string;
+  mobile?: string;
   scheduledAt?: string;
   status?: string;
 }
 
-export const getAllBookings = async (
-  page: number = 1, 
+// API Functions
+export const createDemo = async (data: CreateDemoData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.post<SingleDemoResponse>(
+      "/api/v1/user/createBooking",
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAllDemos = async (
+  page: number = 1,
   limit: number = 10,
-  filters?: BookingFilters
+  filters?: DemoFilters
 ) => {
   try {
-    let url = `/api/v1/user/getAllBookings?page=${page}&limit=${limit}`;
-    
-    // Add filters to URL if provided
+    const token = localStorage.getItem('token');
+    const queryParams = new URLSearchParams();
+    queryParams.append("page", page.toString());
+    queryParams.append("limit", limit.toString());
+
     if (filters) {
-      if (filters.name) url += `&name=${encodeURIComponent(filters.name)}`;
-      if (filters.email) url += `&email=${encodeURIComponent(filters.email)}`;
-      if (filters.scheduledAt) url += `&scheduledAt=${encodeURIComponent(filters.scheduledAt)}`;
-      if (filters.status) url += `&status=${encodeURIComponent(filters.status)}`;
+      // Add each filter if it has a value
+      if (filters.name) queryParams.append("name", filters.name);
+      if (filters.email) queryParams.append("email", filters.email);
+      if (filters.mobile) queryParams.append("mobile", filters.mobile);
+      if (filters.scheduledAt) queryParams.append("scheduledAt", filters.scheduledAt);
+      if (filters.status) queryParams.append("status", filters.status);
     }
-    
-    const response = await axiosInstance.get<BookingsResponse>(url);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
 
-export const getBookingById = async (bookingId: string) => {
-  try {
-    const response = await axiosInstance.get<SingleBookingResponse>(
-      `/api/v1/user/getBookingById/${bookingId}`
+    const response = await axiosInstance.get<DemosResponse>(
+      `/api/v1/user/getAllBookings?${queryParams.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
     );
     return response.data;
   } catch (error) {
@@ -89,16 +111,16 @@ export const getBookingById = async (bookingId: string) => {
   }
 };
 
-export const updateBooking = async (bookingId: string, data: {
-  name: string;
-  email: string;
-  mobile: string;
-  scheduledAt: string;
-}) => {
+export const getDemoById = async (demoId: string) => {
   try {
-    const response = await axiosInstance.put<SingleBookingResponse>(
-      `/api/v1/user/updateBooking/${bookingId}`,
-      data
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.get<SingleDemoResponse>(
+      `/api/v1/user/getBookingById/${demoId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
     );
     return response.data;
   } catch (error) {
@@ -106,10 +128,20 @@ export const updateBooking = async (bookingId: string, data: {
   }
 };
 
-export const deleteBooking = async (bookingId: string) => {
+export const updateDemo = async (
+  demoId: string,
+  data: UpdateDemoData
+) => {
   try {
-    const response = await axiosInstance.delete(
-      `/api/v1/user/deleteBooking/${bookingId}`
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.put<SingleDemoResponse>(
+      `/api/v1/user/updateBooking/${demoId}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
     );
     return response.data;
   } catch (error) {
@@ -117,11 +149,35 @@ export const deleteBooking = async (bookingId: string) => {
   }
 };
 
-export const rescheduleBooking = async (bookingId: string, scheduledAt: string) => {
+export const deleteDemo = async (demoId: string) => {
   try {
-    const response = await axiosInstance.patch<SingleBookingResponse>(
-      `/api/v1/user/bookingRescheduled/${bookingId}`,
-      { scheduledAt }
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.delete<{
+      success: boolean;
+      statusCode: number;
+      message: string;
+    }>(`/api/v1/user/deleteBooking/${demoId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const rescheduleDemo = async (demoId: string, scheduledAt: string) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.patch<SingleDemoResponse>(
+      `/api/v1/user/bookingRescheduled/${demoId}`,
+      { scheduledAt },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
     );
     return response.data;
   } catch (error) {
@@ -129,11 +185,17 @@ export const rescheduleBooking = async (bookingId: string, scheduledAt: string) 
   }
 };
 
-export const cancelBooking = async (bookingId: string, reason: string) => {
+export const cancelDemo = async (demoId: string, reason: string) => {
   try {
-    const response = await axiosInstance.patch<SingleBookingResponse>(
-      `/api/v1/user/bookingCancelled/${bookingId}`,
-      { reason }
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.patch<SingleDemoResponse>(
+      `/api/v1/user/bookingCancelled/${demoId}`,
+      { reason },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
     );
     return response.data;
   } catch (error) {
@@ -141,10 +203,17 @@ export const cancelBooking = async (bookingId: string, reason: string) => {
   }
 };
 
-export const completeBooking = async (bookingId: string) => {
+export const completeDemo = async (demoId: string) => {
   try {
-    const response = await axiosInstance.patch<SingleBookingResponse>(
-      `/api/v1/user/bookingCompleted/${bookingId}`
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.patch<SingleDemoResponse>(
+      `/api/v1/user/bookingCompleted/${demoId}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
     );
     return response.data;
   } catch (error) {

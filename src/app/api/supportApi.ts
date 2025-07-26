@@ -3,7 +3,8 @@ import axiosInstance from "./AxiosInstance";
 // Types
 export interface Support {
   _id: string;
-  ticketId: string; // Changed from ticketId to ticket
+  ticketId: string;
+  ticket: string;
   subject: string;
   description: string;
   category: "Technical" | "Billing" | "General" | "Feature Request";
@@ -13,6 +14,11 @@ export interface Support {
   createdAt: string;
   updatedAt: string;
   userName?: string; 
+  user:{
+    _id: string;
+    name: string;
+    email: string;
+  },
   companyId: {
     _id: string;
     companyId: string;

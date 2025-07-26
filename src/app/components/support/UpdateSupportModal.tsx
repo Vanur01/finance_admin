@@ -54,7 +54,6 @@ export default function UpdateSupportModal({ isOpen, onClose, support, onSuccess
     try {
       setLoading(true);
       await updateSupport(support._id, formData);
-      // Call onSuccess to refresh data if provided
       if (onSuccess) {
         onSuccess();
       }
@@ -67,17 +66,28 @@ export default function UpdateSupportModal({ isOpen, onClose, support, onSuccess
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "new":
-        return <Clock className="w-4 h-4 text-blue-500" />;
-      case "in-progress":
+    switch (status.toLowerCase()) {
+      case "inprogress":
         return <AlertCircle className="w-4 h-4 text-yellow-500" />;
       case "resolved":
         return <CheckCircle2 className="w-4 h-4 text-green-500" />;
       case "closed":
         return <XCircle className="w-4 h-4 text-red-500" />;
       default:
-        return <Clock className="w-4 h-4 text-blue-500" />;
+        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
+    }
+  };
+
+  const formatStatusLabel = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "inprogress":
+        return "In Progress";
+      case "resolved":
+        return "Resolved";
+      case "closed":
+        return "Closed";
+      default:
+        return status;
     }
   };
 
@@ -95,7 +105,7 @@ export default function UpdateSupportModal({ isOpen, onClose, support, onSuccess
             <Label className="flex items-center">
               Ticket ID
             </Label>
-            <div className="text-sm font-medium">{support.ticketId}</div>
+            <div className="text-sm font-medium">{support.ticket}</div>
           </div>
           
           <div className="grid gap-2">
@@ -112,16 +122,13 @@ export default function UpdateSupportModal({ isOpen, onClose, support, onSuccess
             </Label>
             <Select value={formData.status} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select status" />
+                <div className="flex items-center">
+                  {getStatusIcon(formData.status)}
+                  <span className="ml-2">{formatStatusLabel(formData.status)}</span>
+                </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="new">
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2 text-blue-500" />
-                    <span>New</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="in-progress">
+                <SelectItem value="Inprogress">
                   <div className="flex items-center">
                     <AlertCircle className="w-4 h-4 mr-2 text-yellow-500" />
                     <span>In Progress</span>

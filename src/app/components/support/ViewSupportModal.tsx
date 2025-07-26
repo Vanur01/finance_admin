@@ -59,12 +59,14 @@ export default function ViewSupportModal({ isOpen, onClose, supportId, companyId
     if (!priority) return "text-gray-500 bg-gray-50";
     
     switch (priority.toLowerCase()) {
+      case "urgent":
+        return "text-red-700 bg-red-50";
       case "high":
         return "text-red-500 bg-red-50";
       case "medium":
         return "text-yellow-500 bg-yellow-50";
       case "low":
-        return "text-green-500 bg-green-50";
+        return "text-gray-500 bg-gray-50";
       default:
         return "text-gray-500 bg-gray-50";
     }
@@ -74,9 +76,7 @@ export default function ViewSupportModal({ isOpen, onClose, supportId, companyId
     if (!status) return "text-blue-500";
     
     switch (status.toLowerCase()) {
-      case "new":
-        return "text-blue-500";
-      case "in-progress":
+      case "inprogress":
         return "text-yellow-500";
       case "resolved":
         return "text-green-500";
@@ -85,6 +85,12 @@ export default function ViewSupportModal({ isOpen, onClose, supportId, companyId
       default:
         return "text-blue-500";
     }
+  };
+
+  const formatStatusDisplay = (status: string | undefined) => {
+    if (!status) return "";
+    if (status.toLowerCase() === "inprogress") return "In Progress";
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   };
 
   return (
@@ -154,24 +160,24 @@ export default function ViewSupportModal({ isOpen, onClose, supportId, companyId
                 <div className="mb-6">
                   <div className="flex items-center mb-2">
                     <span className={`inline-flex items-center`}>
-                      <AlertTriangle className={`w-4 h-4 mr-2 ${getPriorityBadgeColor(support.priority)}`} />
+                      <AlertTriangle className={`w-4 h-4 mr-2 }`} />
                     </span>
                     <span className="text-sm text-muted-foreground">Priority</span>
                   </div>
-                  <div className={`text-base font-medium ${getPriorityBadgeColor(support.priority)}`}>
-                    {support.priority}
+                  <div className={`text-sm font-medium px-2 py-1 ${getPriorityBadgeColor(support.priority)}`}>
+                    {support.priority.charAt(0).toUpperCase() + support.priority.slice(1).toLowerCase()}
                   </div>
                 </div>
                 
                 <div className="mb-6">
                   <div className="flex items-center mb-2">
                     <span className={`inline-flex items-center`}>
-                      <Clock className={`w-4 h-4 mr-2 ${getStatusColor(support.status)}`} />
+                      <Clock className={`w-4 h-4 mr-2 }`} />
                     </span>
                     <span className="text-sm text-muted-foreground">Status</span>
                   </div>
                   <div className={`text-base font-medium ${getStatusColor(support.status)}`}>
-                    {support.status.replace("-", " ")}
+                    {formatStatusDisplay(support.status)}
                   </div>
                 </div>
               </div>
@@ -210,7 +216,7 @@ export default function ViewSupportModal({ isOpen, onClose, supportId, companyId
             </div>
             
             <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={onClose}>
+              <Button variant="outline" onClick={onClose} className='cursor-pointer'>
                 Close
               </Button>
             </div>
@@ -218,7 +224,7 @@ export default function ViewSupportModal({ isOpen, onClose, supportId, companyId
         ) : (
           <div className="py-12 text-center">
             <p className="text-muted-foreground">No ticket details available</p>
-            <Button variant="outline" onClick={onClose} className="mt-4">
+            <Button variant="outline" onClick={onClose} className="mt-4 cursor-pointer">
               Close
             </Button>
           </div>

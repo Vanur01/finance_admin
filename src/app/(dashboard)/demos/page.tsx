@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { DateTime } from "luxon";
 import {
   Table,
@@ -20,11 +20,11 @@ import {
   Search,
   X,
   Filter,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -34,6 +34,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -42,7 +50,12 @@ import {
 import { ViewDemoModal } from "@/app/components/demo/ViewDemoModal";
 import { CreateDemoModal } from "@/app/components/demo/CreateDemoModal";
 import useDemoStore from "@/lib/stores/demoStore";
-import { Booking, BookingFilters, createBooking, updateBooking, getBookingById } from "@/app/api/demoApi";
+import {
+  Booking,
+  BookingFilters,
+  createBooking,
+  getBookingById,
+} from "@/app/api/demoApi";
 
 interface Demo {
   id: string;
@@ -51,7 +64,7 @@ interface Demo {
   phoneNumber: string;
   dateTime: DateTime;
   module: string;
-  status: "scheduled" | "done" | "missed";
+  status: "scheduled" | "rescheduled" | "cancelled" | "done" | "missed";
   notes: string | null;
 }
 
@@ -70,7 +83,7 @@ interface DemoFilters {
 }
 
 // Import the utility functions instead of defining them here
-import { getStatusIcon, getStatusText } from '@/app/utils/demoStatusUtils';
+import { getStatusIcon, getStatusText } from "@/app/utils/demoStatusUtils";
 
 const DemoTable: React.FC<DemoTableProps> = ({ demos, onAction }) => {
   return (
@@ -109,12 +122,15 @@ const DemoTable: React.FC<DemoTableProps> = ({ demos, onAction }) => {
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
+                    <Button
+                      variant="ghost"
+                      className="h-8 w-8 p-0 cursor-pointer"
+                    >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {demo.status === "done" && (
+                    {demo.status !== "cancelled" && demo.status !== "done" && (
                       <>
                         <DropdownMenuItem
                           onClick={() => onAction("reschedule", demo)}
@@ -139,7 +155,7 @@ const DemoTable: React.FC<DemoTableProps> = ({ demos, onAction }) => {
                     <DropdownMenuItem onClick={() => onAction("view", demo)}>
                       View Details
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAction("cancel", demo)}>
+                    <DropdownMenuItem onClick={() => onAction("delete", demo)}>
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -154,17 +170,17 @@ const DemoTable: React.FC<DemoTableProps> = ({ demos, onAction }) => {
 };
 
 const DemoPage = () => {
-  const { 
-    bookings, 
-    loading, 
-    error, 
+  const {
+    bookings,
+    loading,
+    error,
     fetchBookings,
-    total, 
+    total,
     page,
     totalPages,
     filters: apiFilters,
     setFilters: setApiFilters,
-    resetFilters: resetApiFilters
+    resetFilters: resetApiFilters,
   } = useDemoStore();
   const [filters, setFilters] = useState<DemoFilters>({
     search: "",
@@ -179,7 +195,7 @@ const DemoPage = () => {
   const [isViewModalLoading, setIsViewModalLoading] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingDemo, setEditingDemo] = useState<Demo | null>(null);
-  const [modalMode, setModalMode] = useState<'create' | 'update'>('create');
+  const [modalMode, setModalMode] = useState<"create" | "update">("create");
 
   const handleDemoAction = async (data: {
     name: string;
@@ -188,10 +204,10 @@ const DemoPage = () => {
     scheduledAt: string;
   }) => {
     try {
-      if (modalMode === 'create') {
+      if (modalMode === "create") {
         await createBooking(data);
-      } else if (modalMode === 'update' && editingDemo) {
-        await updateBooking(editingDemo.id, data);
+      } else if (modalMode === "update" && editingDemo) {
+        await useDemoStore.getState().updateBooking(editingDemo.id, data);
       }
       setIsCreateModalOpen(false);
       setEditingDemo(null);
@@ -201,7 +217,7 @@ const DemoPage = () => {
         limit: 1,
       });
     } catch (error) {
-      console.error('Failed to handle booking:', error);
+      console.error("Failed to handle booking:", error);
       alert(`Failed to ${modalMode} booking. Please try again.`);
     }
   };
@@ -218,13 +234,13 @@ const DemoPage = () => {
         dateTime: DateTime.fromISO(bookingData.scheduledAt),
         module: "CRM Demo",
         status: bookingData.status,
-        notes: bookingData.notes
+        notes: bookingData.notes,
       });
-      setModalMode('update');
+      setModalMode("update");
       setIsCreateModalOpen(true);
     } catch (error) {
-      console.error('Failed to fetch booking details:', error);
-      alert('Failed to fetch booking details. Please try again.');
+      console.error("Failed to fetch booking details:", error);
+      alert("Failed to fetch booking details. Please try again.");
     }
   };
 
@@ -242,8 +258,8 @@ const DemoPage = () => {
       .map((booking) => {
         const dateTime = DateTime.fromISO(booking.scheduledAt);
 
-        // Determine status - use API status if it's 'done', otherwise check if missed
-        let status: Demo["status"] = booking.status as "scheduled" | "done";
+        // Determine status - use API status if it's not 'scheduled', otherwise check if missed
+        let status: Demo["status"] = booking.status as any;
         if (booking.status === "scheduled" && dateTime < DateTime.now()) {
           status = "missed";
         }
@@ -255,7 +271,7 @@ const DemoPage = () => {
           phoneNumber: booking.mobile,
           dateTime,
           module: "CRM Demo",
-          status: booking.status,
+          status,
           notes: booking.notes,
         };
       })
@@ -265,17 +281,46 @@ const DemoPage = () => {
   const handleAction = async (action: string, demo: Demo) => {
     switch (action) {
       case "reschedule":
-        // TODO: Implement reschedule logic
-        console.log("Reschedule demo:", demo);
+        const newScheduleDate = prompt("Enter new date and time (YYYY-MM-DDTHH:MM:SS):", demo.dateTime.toISO() || "");
+        if (newScheduleDate) {
+          try {
+            await useDemoStore.getState().rescheduleBooking(demo.id, newScheduleDate);
+            alert("Demo successfully rescheduled!");
+          } catch (error) {
+            console.error("Failed to reschedule demo:", error);
+            alert("Failed to reschedule demo. Please try again.");
+          }
+        }
         break;
       case "cancel":
-        if (confirm("Are you sure you want to delete this demo?")) {
-          useDemoStore.getState().deleteBooking(demo.id);
+        if (confirm("Are you sure you want to cancel this demo?")) {
+          const reason = prompt("Please provide a reason for cancellation:", "");
+          if (reason !== null) {
+            try {
+              await useDemoStore.getState().cancelBooking(demo.id, reason);
+              alert("Demo successfully cancelled!");
+            } catch (error) {
+              console.error("Failed to cancel demo:", error);
+              alert("Failed to cancel demo. Please try again.");
+            }
+          }
         }
         break;
       case "complete":
-        // Mark as completed (This would require an additional API endpoint)
-        console.log("Mark as completed:", demo);
+        if (confirm("Mark this demo as completed?")) {
+          try {
+            await useDemoStore.getState().completeBooking(demo.id);
+            alert("Demo marked as completed!");
+          } catch (error) {
+            console.error("Failed to mark demo as completed:", error);
+            alert("Failed to mark demo as completed. Please try again.");
+          }
+        }
+        break;
+      case "delete":
+        if (confirm("Are you sure you want to delete this demo?")) {
+          useDemoStore.getState().deleteBooking(demo.id);
+        }
         break;
       case "view":
         setSelectedDemo(demo);
@@ -302,17 +347,18 @@ const DemoPage = () => {
     const apiFilterUpdates: Partial<BookingFilters> = {
       name: filters.search || undefined,
       email: filters.search || undefined, // Also search in emails
-      status: filters.status !== 'all' ? filters.status : undefined,
+      // Use empty string for 'all' status to simulate blank value
+      status: filters.status !== "all" ? filters.status : "",
     };
-    
+
     // Only add the date if it exists
     const dateStart = filters.dateRange.start;
     if (dateStart) {
-      apiFilterUpdates.scheduledAt = dateStart.toFormat('yyyy-MM-dd');
+      apiFilterUpdates.scheduledAt = dateStart.toFormat("yyyy-MM-dd");
     }
-    
+
     setApiFilters(apiFilterUpdates);
-    
+
     fetchBookings({
       page: 1, // Reset to first page when filtering
       limit: 1,
@@ -323,7 +369,7 @@ const DemoPage = () => {
   const resetAllFilters = () => {
     setFilters({
       search: "",
-      status: "all",
+      status: "all", // Using "all" to represent blank/empty value
       dateRange: {
         start: null,
         end: null,
@@ -335,25 +381,25 @@ const DemoPage = () => {
       limit: 1,
     });
   };
-  
+
   // Handle search
   const handleSearch = (searchTerm: string) => {
     setFilters((prev) => ({ ...prev, search: searchTerm }));
   };
 
-  // Handle status filter
+  // These handlers are no longer used directly as we apply filters immediately in the onChange handlers
+  // But we'll keep them in case we need them elsewhere
   const handleStatusFilter = (status: Demo["status"] | "all") => {
     setFilters((prev) => ({ ...prev, status }));
   };
-  
-  // Handle date filter
+
   const handleDateChange = (date: DateTime | null) => {
-    setFilters((prev) => ({ 
-      ...prev, 
+    setFilters((prev) => ({
+      ...prev,
       dateRange: {
         ...prev.dateRange,
-        start: date
-      }
+        start: date,
+      },
     }));
   };
 
@@ -377,36 +423,44 @@ const DemoPage = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Scheduled Demos</h1>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => {
-            setModalMode('create');
-            setEditingDemo(null);
-            setIsCreateModalOpen(true);
-          }}>
+        <h1 className="text-2xl font-bold">Demo Management</h1>
+        <div className="flex space-x-2">
+          <Button
+            onClick={() => {
+              setModalMode("create");
+              setEditingDemo(null);
+              setIsCreateModalOpen(true);
+            }}
+            className="ml-2 cursor-pointer"
+          >
+            <Plus className="h-4 w-4 mr-2" />
             Schedule New Demo
           </Button>
         </div>
       </div>
 
-      <CreateDemoModal 
+      <CreateDemoModal
         isOpen={isCreateModalOpen}
         onClose={() => {
           setIsCreateModalOpen(false);
           setEditingDemo(null);
-          setModalMode('create');
+          setModalMode("create");
         }}
         onSubmit={handleDemoAction}
         mode={modalMode}
-        initialData={editingDemo ? {
-          name: editingDemo.clientName,
-          email: editingDemo.email,
-          mobile: editingDemo.phoneNumber,
-          scheduledAt: editingDemo.dateTime.toISO() || '',
-          id: editingDemo.id
-        } : undefined}
+        initialData={
+          editingDemo
+            ? {
+                name: editingDemo.clientName,
+                email: editingDemo.email,
+                mobile: editingDemo.phoneNumber,
+                scheduledAt: editingDemo.dateTime.toISO() || "",
+                id: editingDemo.id,
+              }
+            : undefined
+        }
       />
 
       <div className="mb-6 flex flex-col md:flex-row gap-4 md:items-center justify-between">
@@ -421,7 +475,7 @@ const DemoPage = () => {
                   value={filters.search}
                   onChange={(e) => handleSearch(e.target.value)}
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       applyFilters();
                     }
                   }}
@@ -441,10 +495,7 @@ const DemoPage = () => {
             <Filter className="h-4 w-4" />
             {showFilters ? "Hide Filters" : "Show Filters"}
           </Button>
-          <Button
-            variant="outline"
-            onClick={resetAllFilters}
-          >
+          <Button variant="outline" onClick={resetAllFilters}>
             Reset Filters
           </Button>
         </div>
@@ -462,8 +513,29 @@ const DemoPage = () => {
                 <Select
                   value={filters.status}
                   onValueChange={(value) => {
-                    handleStatusFilter(value as Demo["status"] | "all");
-                    applyFilters();
+                    // Update filter state and then apply filters immediately
+                    setFilters((prev) => ({
+                      ...prev,
+                      status: value as Demo["status"] | "all",
+                    }));
+
+                    // Apply filters with the new status value directly
+                    const apiFilterUpdates: Partial<BookingFilters> = {
+                      ...apiFilters,
+                      name: filters.search || undefined,
+                      email: filters.search || undefined,
+                      status: value !== "all" ? (value as Demo["status"]) : "",
+                    };
+
+                    // Apply date if exists
+                    const dateStart = filters.dateRange.start;
+                    if (dateStart) {
+                      apiFilterUpdates.scheduledAt =
+                        dateStart.toFormat("yyyy-MM-dd");
+                    }
+
+                    setApiFilters(apiFilterUpdates);
+                    fetchBookings({ page: 1, limit: 1 });
                   }}
                 >
                   <SelectTrigger className="w-full bg-white dark:bg-gray-800">
@@ -472,6 +544,8 @@ const DemoPage = () => {
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="rescheduled">Rescheduled</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
                     <SelectItem value="done">Done</SelectItem>
                     <SelectItem value="missed">Missed</SelectItem>
                   </SelectContent>
@@ -482,14 +556,43 @@ const DemoPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Demo Date
                 </label>
-                <Input 
+                <Input
                   type="date"
-                  value={filters.dateRange.start ? filters.dateRange.start.toFormat('yyyy-MM-dd') : ''}
+                  value={
+                    filters.dateRange.start
+                      ? filters.dateRange.start.toFormat("yyyy-MM-dd")
+                      : ""
+                  }
                   onChange={(e) => {
-                    const date = e.target.value ? 
-                      DateTime.fromFormat(e.target.value, 'yyyy-MM-dd') : null;
-                    handleDateChange(date);
-                    applyFilters();
+                    const date = e.target.value
+                      ? DateTime.fromFormat(e.target.value, "yyyy-MM-dd")
+                      : null;
+
+                    // Update filter state
+                    setFilters((prev) => ({
+                      ...prev,
+                      dateRange: {
+                        ...prev.dateRange,
+                        start: date,
+                      },
+                    }));
+
+                    // Apply filters with the new date directly
+                    const apiFilterUpdates: Partial<BookingFilters> = {
+                      ...apiFilters,
+                      name: filters.search || undefined,
+                      email: filters.search || undefined,
+                      status: filters.status !== "all" ? filters.status : "",
+                    };
+
+                    // Add the newly selected date
+                    if (date) {
+                      apiFilterUpdates.scheduledAt =
+                        date.toFormat("yyyy-MM-dd");
+                    }
+
+                    setApiFilters(apiFilterUpdates);
+                    fetchBookings({ page: 1, limit: 1 });
                   }}
                   className="w-full bg-white dark:bg-gray-800"
                 />
@@ -499,31 +602,69 @@ const DemoPage = () => {
         </Card>
       </div>
 
-      {filteredDemos.length === 0 ? (
+      {/* {filteredDemos.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           No booked demos found.
         </div>
       ) : (
         <DemoTable demos={filteredDemos} onAction={handleAction} />
-      )}
+      )} */}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex flex-col items-center justify-center py-4 border-t gap-2 mt-6">
-          <Pagination 
-            currentPage={page} 
-            totalPages={totalPages} 
-            onPageChange={handlePageChange} 
-            isLoading={loading}
-            showFirstLast={true}
-            className="mt-2"
-          />
-          <div className="text-sm text-muted-foreground">
-            Showing page {page} of {totalPages}
-          </div>
-        </div>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Scheduled Demos</CardTitle>
+          <CardDescription>View and manage all scheduled demos</CardDescription>
+        </CardHeader>
 
+        <CardContent>
+          {loading ? (
+            <div className="py-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+              <p className="mt-2">Loading demos...</p>
+            </div>
+          ) : error ? (
+            <div className="py-8 text-center text-red-500">
+              <p>Error: {error}</p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => fetchBookings({ page: 1, limit: 1 })}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-md border">
+                {filteredDemos.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No booked demos found.
+                  </div>
+                ) : (
+                  <DemoTable demos={filteredDemos} onAction={handleAction} />
+                )}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex flex-col items-center justify-center py-4 border-t gap-2 mt-6">
+                  <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    isLoading={loading}
+                    showFirstLast={true}
+                    className="mt-2"
+                  />
+                  <div className="text-sm text-muted-foreground">
+                    Showing page {page} of {totalPages} ({total} total demos)
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
       <ViewDemoModal
         demo={selectedDemo}
         onClose={() => {

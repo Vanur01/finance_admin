@@ -85,7 +85,7 @@ const navItems: NavItem[] = [
     icon: <Presentation className="w-5 h-5" />,
   },
   {
-    title: 'Contact-Support',
+    title: 'Ticket-Support',
     path: '/support',
     icon: <Headset className="w-5 h-5" />,
   },

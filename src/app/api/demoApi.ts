@@ -6,7 +6,7 @@ export interface Booking {
   name: string;
   email: string;
   mobile: string;
-  status: "scheduled" | "done";
+  status: "scheduled" | "rescheduled" | "cancelled" | "done";
   scheduledAt: string;
   notes: string | null;
 }
@@ -110,6 +110,41 @@ export const deleteBooking = async (bookingId: string) => {
   try {
     const response = await axiosInstance.delete(
       `/api/v1/user/deleteBooking/${bookingId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const rescheduleBooking = async (bookingId: string, scheduledAt: string) => {
+  try {
+    const response = await axiosInstance.patch<SingleBookingResponse>(
+      `/api/v1/user/bookingRescheduled/${bookingId}`,
+      { scheduledAt }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const cancelBooking = async (bookingId: string, reason: string) => {
+  try {
+    const response = await axiosInstance.patch<SingleBookingResponse>(
+      `/api/v1/user/bookingCancelled/${bookingId}`,
+      { reason }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const completeBooking = async (bookingId: string) => {
+  try {
+    const response = await axiosInstance.patch<SingleBookingResponse>(
+      `/api/v1/user/bookingCompleted/${bookingId}`
     );
     return response.data;
   } catch (error) {

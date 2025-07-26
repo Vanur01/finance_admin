@@ -18,7 +18,7 @@ interface Demo {
   phoneNumber: string
   dateTime: DateTime
   module: string
-  status: 'scheduled' | 'done' | 'missed'
+  status: 'scheduled' | 'rescheduled' | 'cancelled' | 'done' | 'missed'
   notes: string | null
 }
 

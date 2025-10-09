@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Users,
   Building2,
@@ -17,36 +17,16 @@ import {
   ArrowRight,
   CheckCircle,
   MoreHorizontal,
+  CreditCard,
+  UserCheck,
 } from 'lucide-react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ChartOptions
-} from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import useDashboardStore from "@/lib/stores/dashboardStore";
+import { ActivityFeedItem } from "@/app/api/dashboardApi";
 
 interface MetricCard {
   title: string;
@@ -57,242 +37,135 @@ interface MetricCard {
   subtitle?: string;
 }
 
-const metricCards: MetricCard[] = [
-  {
-    title: 'Total Leads',
-    value: '1,234',
-    change: 15.3,
-    icon: <Target className="w-6 h-6 text-blue-600" />,
-    trend: 'up',
-    subtitle: 'Last 30 days',
-  },
-  {
-    title: 'Demos Scheduled',
-    value: '48',
-    change: 8.2,
-    icon: <Calendar className="w-6 h-6 text-indigo-600" />,
-    trend: 'up',
-    subtitle: 'Next 7 days',
-  },
-  {
-    title: 'Trial Users',
-    value: '156',
-    change: 12.5,
-    icon: <Users className="w-6 h-6 text-purple-600" />,
-    trend: 'up',
-    subtitle: '7-day active',
-  },
-  {
-    title: 'Total Bookings',
-    value: '89',
-    change: -2.4,
-    icon: <Clock className="w-6 h-6 text-rose-600" />,
-    trend: 'down',
-    subtitle: 'This month',
-  },
-  {
-    title: 'Total Revenue',
-    value: '$89,432',
-    change: 4.1,
-    icon: <DollarSign className="w-6 h-6 text-emerald-600" />,
-    trend: 'up',
-    subtitle: 'This month',
-  },
-];
 
-const funnelData = [
-  { stage: 'Leads', count: 1324, color: '#3B82F6', bgColor: '#EFF6FF' },
-  { stage: 'Demos', count: 214, color: '#60A5FA', bgColor: '#F0F9FF' },
-  { stage: 'Trials', count: 47, color: '#93C5FD', bgColor: '#F8FAFC' },
-  { stage: 'Paid', count: 22, color: '#BFDBFE', bgColor: '#F1F5F9' },
-];
-
-const demoData = [
-  { week: 'Week 1', demos: 12 },
-  { week: 'Week 2', demos: 19 },
-  { week: 'Week 3', demos: 15 },
-  { week: 'Week 4', demos: 22 },
-  { week: 'Week 5', demos: 18 },
-];
-
-const revenueData = [
-  { month: 'Jan', revenue: 45000 },
-  { month: 'Feb', revenue: 52000 },
-  { month: 'Mar', revenue: 48000 },
-  { month: 'Apr', revenue: 61000 },
-  { month: 'May', revenue: 55000 },
-  { month: 'Jun', revenue: 72000 },
-];
-
-const recentActivities = [
-  {
-    id: 1,
-    type: 'demo',
-    action: 'Raj scheduled a demo',
-    time: '3 hrs ago',
-    icon: <Calendar className="w-5 h-5 text-blue-600" />,
-  },
-  {
-    id: 2,
-    type: 'trial',
-    action: 'Kavita started a 7-day trial',
-    time: 'yesterday',
-    icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-  },
-  {
-    id: 3,
-    type: 'payment',
-    action: '₹12,000 payment received',
-    time: '2 days ago',
-    icon: <DollarSign className="w-5 h-5 text-green-600" />,
-  },
-  {
-    id: 4,
-    type: 'lead',
-    action: 'New lead from website',
-    time: '2 days ago',
-    icon: <Target className="w-5 h-5 text-blue-600" />,
-  },
-];
 
 export default function DashboardHome() {
   const [searchQuery, setSearchQuery] = useState('');
+  const { dashboardData, loading, error, fetchDashboardData } = useDashboardStore();
 
-  const demoChartData = {
-    labels: demoData.map(item => item.week),
-    datasets: [
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  // Helper function to format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+    }).format(amount);
+  };
+
+  // Helper function to format time
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'} ago`;
+    }
+  };
+
+  // Helper function to get activity icon
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'subscription':
+        return <CreditCard className="w-5 h-5 text-green-600" />;
+      case 'lead':
+        return <Target className="w-5 h-5 text-blue-600" />;
+      case 'booking':
+        return <Calendar className="w-5 h-5 text-indigo-600" />;
+      default:
+        return <Activity className="w-5 h-5 text-gray-600" />;
+    }
+  };
+
+  // Create metric cards from API data
+  const getMetricCards = (): MetricCard[] => {
+    if (!dashboardData) return [];
+    
+    const { summary } = dashboardData;
+    
+    return [
       {
-        label: 'Demos',
-        data: demoData.map(item => item.demos),
-        borderColor: '#3B82F6',
-        backgroundColor: '#3B82F6',
-        tension: 0.4,
-        borderWidth: 3,
-        pointRadius: 4,
-        pointHoverRadius: 6,
+        title: 'Total Leads',
+        value: summary.totalLeads.toString(),
+        change: 15.3, // You can calculate this based on historical data
+        icon: <Target className="w-6 h-6 text-blue-600" />,
+        trend: 'up',
+        subtitle: 'All time',
       },
-    ],
-  };
-
-  const demoChartOptions: ChartOptions<'line'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: 'white',
-        titleColor: '#111827',
-        bodyColor: '#111827',
-        borderColor: '#e5e7eb',
-        borderWidth: 1,
-        padding: 12,
-        boxPadding: 4,
-        usePointStyle: true,
-        bodyFont: {
-          size: 12,
-        },
-        titleFont: {
-          size: 12,
-          weight: 'bold',
-        },
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-        ticks: {
-          font: {
-            size: 12,
-          },
-        },
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: '#e5e7eb',
-        },
-        ticks: {
-          font: {
-            size: 12,
-          },
-        },
-      },
-    },
-  };
-
-  const revenueChartData = {
-    labels: revenueData.map(item => item.month),
-    datasets: [
       {
-        label: 'Revenue',
-        data: revenueData.map(item => item.revenue),
-        backgroundColor: '#3B82F6',
-        borderRadius: 4,
+        title: 'Total Bookings',
+        value: summary.totalBookings.toString(),
+        change: 8.2,
+        icon: <Calendar className="w-6 h-6 text-indigo-600" />,
+        trend: 'up',
+        subtitle: 'All time',
       },
-    ],
+      {
+        title: 'Total Users',
+        value: summary.totalUsers.toString(),
+        change: 12.5,
+        icon: <Users className="w-6 h-6 text-purple-600" />,
+        trend: 'up',
+        subtitle: 'All time',
+      },
+      {
+        title: 'Paid Users',
+        value: summary.totalPaidUsers.toString(),
+        change: 4.1,
+        icon: <UserCheck className="w-6 h-6 text-emerald-600" />,
+        trend: 'up',
+        subtitle: 'Active subscriptions',
+      },
+      {
+        title: 'Total Revenue',
+        value: formatCurrency(summary.totalRevenue),
+        change: 4.1,
+        icon: <DollarSign className="w-6 h-6 text-green-600" />,
+        trend: 'up',
+        subtitle: 'All time',
+      },
+    ];
   };
 
-  const revenueChartOptions: ChartOptions<'bar'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: 'white',
-        titleColor: '#111827',
-        bodyColor: '#111827',
-        borderColor: '#e5e7eb',
-        borderWidth: 1,
-        padding: 12,
-        boxPadding: 4,
-        usePointStyle: true,
-        bodyFont: {
-          size: 12,
-        },
-        titleFont: {
-          size: 12,
-          weight: 'bold',
-        },
-        callbacks: {
-          label: function(context) {
-            return `$${context.parsed.y.toLocaleString()}`;
-          },
-        },
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-        ticks: {
-          font: {
-            size: 12,
-          },
-        },
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: '#e5e7eb',
-        },
-        ticks: {
-          font: {
-            size: 12,
-          },
-          callback: function(value) {
-            return `$${value.toLocaleString()}`;
-          },
-        },
-      },
-    },
-  };
+  if (loading) {
+    return (
+      <div className="space-y-8 p-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <span className="ml-2">Loading dashboard...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-8 p-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center text-red-500">
+            <p>Error: {error}</p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => fetchDashboardData()}
+            >
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const metricCards = getMetricCards();
 
   return (
     <div className="space-y-8 p-8">
@@ -302,24 +175,6 @@ export default function DashboardHome() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground">Welcome back! Here's an overview of your business.</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-[300px]"
-              />
-            </div>
-            <Button variant="outline" size="icon">
-              <Bell className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="icon">
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
           </div>
         </div>
       </div>
@@ -362,69 +217,45 @@ export default function DashboardHome() {
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Leads Funnel */}
+        {/* Summary Stats */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Leads Funnel</CardTitle>
-                <CardDescription>Track your conversion rates</CardDescription>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <span className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
-                  Total: 1,607
-                </span>
-                <span className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                  Conversion: 1.7%
-                </span>
-              </div>
+            <div>
+              <CardTitle>Business Overview</CardTitle>
+              <CardDescription>Key metrics at a glance</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-4 gap-6">
-              {funnelData.map((item, index) => (
-                <div key={index} className="relative">
-                  <div className="flex flex-col items-center">
-                    <div 
-                      className="w-full aspect-[3/4] rounded-xl mb-4 flex items-end justify-center p-4"
-                      style={{ backgroundColor: item.bgColor }}
-                    >
-                      <div
-                        className="w-full rounded-t-lg transition-all duration-300"
-                        style={{ 
-                          backgroundColor: item.color,
-                          height: `${(item.count / funnelData[0].count) * 100}%`,
-                          minHeight: '20px'
-                        }}
-                      />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-3xl font-bold mb-1">{item.count}</p>
-                      <p className="text-sm font-medium text-muted-foreground">{item.stage}</p>
-                      {index < funnelData.length - 1 && (
-                        <div className="absolute -right-3 top-1/2 transform -translate-y-1/2">
-                          <ArrowRight className="w-6 h-6 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-8 pt-6 border-t">
-              <div className="flex justify-between items-center text-sm text-muted-foreground">
-                <div className="flex items-center space-x-4">
-                  <span>Total Leads: 1,607</span>
-                  <span>Conversion Rate: 1.7%</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="default" className="flex items-center gap-1">
-                    <ArrowUpRight className="w-4 h-4" />
-                    <span>12% from last month</span>
-                  </Badge>
-                </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="text-center p-6 bg-blue-50 rounded-lg">
+                <Target className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-blue-900">{dashboardData?.summary.totalLeads || 0}</p>
+                <p className="text-sm text-blue-600">Total Leads</p>
+              </div>
+              <div className="text-center p-6 bg-indigo-50 rounded-lg">
+                <Calendar className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-indigo-900">{dashboardData?.summary.totalBookings || 0}</p>
+                <p className="text-sm text-indigo-600">Total Bookings</p>
+              </div>
+              <div className="text-center p-6 bg-purple-50 rounded-lg">
+                <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-purple-900">{dashboardData?.summary.totalUsers || 0}</p>
+                <p className="text-sm text-purple-600">Total Users</p>
+              </div>
+              <div className="text-center p-6 bg-emerald-50 rounded-lg">
+                <UserCheck className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-emerald-900">{dashboardData?.summary.totalPaidUsers || 0}</p>
+                <p className="text-sm text-emerald-600">Paid Users</p>
+              </div>
+              <div className="text-center p-6 bg-green-50 rounded-lg">
+                <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-green-900">{formatCurrency(dashboardData?.summary.totalRevenue || 0)}</p>
+                <p className="text-sm text-green-600">Total Revenue</p>
+              </div>
+              <div className="text-center p-6 bg-yellow-50 rounded-lg">
+                <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-yellow-900">{dashboardData?.summary.totalTrialUsers || 0}</p>
+                <p className="text-sm text-yellow-600">Trial Users</p>
               </div>
             </div>
           </CardContent>
@@ -438,80 +269,32 @@ export default function DashboardHome() {
                 <CardTitle>Latest Activity</CardTitle>
                 <CardDescription>Recent updates from your team</CardDescription>
               </div>
-              <Button variant="ghost" size="sm">View All</Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {recentActivities.map((activity) => (
+              {dashboardData?.activityFeed.map((activity, index) => (
                 <div
-                  key={activity.id}
+                  key={index}
                   className="flex items-start space-x-4 p-4 hover:bg-muted/50 rounded-lg transition-colors"
                 >
                   <div className="p-3 bg-blue-50 rounded-lg">
-                    {activity.icon}
+                    {getActivityIcon(activity.type)}
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">
-                      {activity.action}
+                      {activity.message}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{formatTime(activity.time)}</p>
                   </div>
                 </div>
-              ))}
+              )) || []}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Demos Chart */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Demos Scheduled</CardTitle>
-                <CardDescription>Weekly demo bookings overview</CardDescription>
-              </div>
-              <Tabs defaultValue="week" className="w-[200px]">
-                <TabsList>
-                  <TabsTrigger value="week">Week</TabsTrigger>
-                  <TabsTrigger value="month">Month</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[350px]">
-              <Line data={demoChartData} options={demoChartOptions} />
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Revenue Chart */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Revenue</CardTitle>
-                <CardDescription>Monthly revenue overview</CardDescription>
-              </div>
-              <Tabs defaultValue="month" className="w-[200px]">
-                <TabsList>
-                  <TabsTrigger value="month">Month</TabsTrigger>
-                  <TabsTrigger value="year">Year</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[350px]">
-              <Bar data={revenueChartData} options={revenueChartOptions} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

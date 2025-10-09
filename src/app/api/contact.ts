@@ -64,7 +64,7 @@ export const getAllContacts = async (
   filters?: ContactFilters
 ) => {
   try {
-    let url = `/api/v1/user/getAllContact?page=${page}&limit=${limit}`;
+    let url = `/api/v1/user/getAllContacts?page=${page}&limit=${limit}`;
     
     // Add filters to URL if provided
     if (filters) {

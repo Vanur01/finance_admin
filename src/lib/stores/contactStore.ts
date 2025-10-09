@@ -79,7 +79,7 @@ const useContactStore = create<ContactStore>((set, get) => ({
     });
   },
 
-  fetchContacts: async ({ page = 1, limit = 1 }) => {
+  fetchContacts: async ({ page = 1, limit = 10 }) => {
     try {
       set({ loading: true, error: null });
       const filters = get().filters;

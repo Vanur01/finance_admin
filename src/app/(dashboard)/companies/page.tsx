@@ -58,7 +58,7 @@ const CompanyPage = () => {
   };
 
   useEffect(() => {
-    fetchCompanies({ page: 1, limit: 1 });
+    fetchCompanies({ page: 1, limit: 10 });
   }, [fetchCompanies, filters]);
 
   const getIndustryOptions = () => [
@@ -118,7 +118,7 @@ const CompanyPage = () => {
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
-      fetchCompanies({ page, limit: 1 });
+      fetchCompanies({ page });
     }
   };
 
@@ -141,7 +141,7 @@ const CompanyPage = () => {
           <Button
             variant="outline"
             className="mt-4"
-            onClick={() => fetchCompanies({ page: 1, limit: 1 })}
+            onClick={() => fetchCompanies({ page: 1 })}
           >
             Retry
           </Button>

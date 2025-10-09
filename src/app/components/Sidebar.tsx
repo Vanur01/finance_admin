@@ -22,6 +22,7 @@ import {
   Package,
   FileBarChart,
   Tag,
+  CreditCard,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -70,9 +71,9 @@ const navItems: NavItem[] = [
   //   icon: <UserPlus className="w-5 h-5" />,
   // },
   {
-    title: 'Revenue',
-    path: '/revenue',
-    icon: <DollarSign className="w-5 h-5" />,
+    title: 'Subscriptions',
+    path: '/subscriptions',
+    icon: <CreditCard className="w-5 h-5" />,
   },
   {
     title: 'Companies',
@@ -155,14 +156,14 @@ export default function Sidebar({
           <div className="flex items-center gap-2">
             <button
               onClick={onMobileMenuClose}
-              className="p-2 rounded-lg bg-white/80 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 backdrop-blur-sm lg:hidden"
+              className="p-2 rounded-lg bg-white/80 shadow border hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 backdrop-blur-sm lg:hidden"
               aria-label="Close mobile menu"
             >
               <ChevronLeft className="w-5 h-5 text-blue-600" />
             </button>
             <button
               onClick={handleCollapse}
-              className="hidden lg:block p-2 rounded-lg bg-white/80 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 backdrop-blur-sm"
+              className="hidden lg:block p-2 rounded-lg bg-white/80 shadow hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 backdrop-blur-sm"
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {isCollapsed ? (

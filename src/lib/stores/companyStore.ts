@@ -103,7 +103,7 @@ const useCompanyStore = create<CompanyStore>((set, get) => ({
       
       if (response.success) {
         set({
-          selectedCompany: response.result.company,
+          selectedCompany: response.result,
           loading: false,
         });
       } else {

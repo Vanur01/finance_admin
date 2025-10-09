@@ -21,7 +21,7 @@ interface SupportStore {
   selectedSupport: Support | null;
   
   fetchSupports: (params: { page?: number; limit?: number }) => Promise<void>;
-  fetchSupportById: (supportId: string) => Promise<void>;
+  fetchSupportById: (supportId: string, companyId: string) => Promise<void>;
   createSupport: (data: CreateSupportRequest) => Promise<void>;
   updateSupport: (
     supportId: string,
@@ -83,10 +83,10 @@ const useSupportStore = create<SupportStore>((set, get) => ({
     }
   },
 
-  fetchSupportById: async (supportId: string) => {
+  fetchSupportById: async (supportId: string, companyId: string) => {
     try {
       set({ loading: true, error: null });
-      const response = await getSupportById(supportId);
+      const response = await getSupportById(supportId, companyId);
       set({ selectedSupport: response.data, loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });

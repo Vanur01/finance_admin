@@ -67,12 +67,12 @@ const SupportPage = () => {
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
-      fetchSupports({ page, limit: 1 });
+      fetchSupports({ page, limit: 10 });
     }
   };
 
   useEffect(() => {
-    fetchSupports({ page: 1, limit: 1 });
+    fetchSupports({ page: 1, limit: 10 });
   }, [fetchSupports]);
 
   // We're using the supports directly as they come from the API with filters already applied

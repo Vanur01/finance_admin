@@ -31,7 +31,7 @@ interface UpdateSupportModalProps {
 export default function UpdateSupportModal({ isOpen, onClose, support, onSuccess }: UpdateSupportModalProps) {
   const { updateSupport } = useSupportStore();
   const [formData, setFormData] = useState<UpdateSupportRequest>({
-    status: support.status,
+    status: support.status || "Inprogress",
     reply: support.reply || ""
   });
   const [loading, setLoading] = useState(false);
@@ -123,8 +123,8 @@ export default function UpdateSupportModal({ isOpen, onClose, support, onSuccess
             <Select value={formData.status} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-full">
                 <div className="flex items-center">
-                  {getStatusIcon(formData.status)}
-                  <span className="ml-2">{formatStatusLabel(formData.status)}</span>
+                  {getStatusIcon(formData.status || "Inprogress")}
+                  <span className="ml-2">{formatStatusLabel(formData.status || "Inprogress")}</span>
                 </div>
               </SelectTrigger>
               <SelectContent>

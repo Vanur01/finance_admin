@@ -72,7 +72,8 @@ const useCompanyStore = create<CompanyStore>((set, get) => ({
       };
       
       const response = await getAllCompanies(page, limit, apiFilters);
-      
+  
+
       if (response.success) {
         set({
           companies: response.result.data,

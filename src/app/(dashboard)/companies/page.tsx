@@ -40,6 +40,7 @@ const CompanyPage = () => {
     totalPages,
   } = useCompanyStore();
 
+  console.log("company....",companies)
   const [showFilters, setShowFilters] = useState(false);
   const [searchInput, setSearchInput] = useState(filters.search);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
@@ -81,6 +82,7 @@ const CompanyPage = () => {
     { value: "enterprise", label: "Enterprise" },
   ];
 
+  console.log("Selected Company Id.....",selectedCompanyId)
   const getSizeBadge = (size: string) => {
     switch (size?.toLowerCase()) {
       case "small":
@@ -265,8 +267,8 @@ const CompanyPage = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              companies.map((company) => (
-                <TableRow key={company.companyId}>
+              companies?.map((company) => (
+                <TableRow key={company._id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30">
@@ -297,7 +299,7 @@ const CompanyPage = () => {
                         className="text-gray-600 cursor-pointer hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
                         title="View Company"
                         onClick={() => {
-                          setSelectedCompanyId(company.companyId);
+                          setSelectedCompanyId(company._id);
                           setIsViewModalOpen(true);
                         }}
                       >

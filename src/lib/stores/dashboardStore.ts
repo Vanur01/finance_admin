@@ -27,6 +27,7 @@ const useDashboardStore = create<DashboardStore>((set) => ({
       
       const response = await getSuperAdminDashboard();
       
+      console.log("Repsonse Super Admin Dashboard",response)
       if (response.status === 'success') {
         set({
           dashboardData: response.data,

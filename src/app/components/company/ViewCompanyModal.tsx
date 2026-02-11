@@ -39,6 +39,8 @@ export default function ViewCompanyModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  console.log("Company Details : ",company)
+
   useEffect(() => {
     const fetchCompanyDetails = async () => {
       if (!companyId) return;
@@ -169,7 +171,7 @@ export default function ViewCompanyModal({
                       <p className="text-sm font-medium text-muted-foreground">
                         Company Size
                       </p>
-                      <div className="mt-1">{getSizeBadge(company.size)}</div>
+                      <div className="mt-1">{getSizeBadge(company?.size)}</div>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
@@ -177,7 +179,7 @@ export default function ViewCompanyModal({
                       <p className="text-sm font-medium text-muted-foreground">
                         Role
                       </p>
-                      <div className="mt-1 text-sm">{company.role}</div>
+                      <div className="mt-1 text-sm">{company?.users[0]?.role}</div>
                     </div>
                   </div>
                 </div>
@@ -190,7 +192,7 @@ export default function ViewCompanyModal({
                         Admin Name
                       </p>
                       <p className="text-base font-medium mt-1">
-                        {company.userName}
+                        {company?.users[0]?.name}
                       </p>
                     </div>
                   </div>
@@ -201,7 +203,7 @@ export default function ViewCompanyModal({
                         Admin Email
                       </p>
                       <p className="text-base font-medium mt-1">
-                        {company.userEmail}
+                        {company?.users[0]?.email}
                       </p>
                     </div>
                   </div>

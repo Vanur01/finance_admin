@@ -30,11 +30,13 @@ import { ActivityFeedItem } from "@/app/api/dashboardApi";
 
 interface MetricCard {
   title: string;
-  value: string;
+  value: any;
   change: number;
   icon: React.ReactNode;
   trend: 'up' | 'down';
   subtitle?: string;
+  totalLeads?:number;
+  totalUsers?:number;
 }
 
 
@@ -42,6 +44,8 @@ interface MetricCard {
 export default function DashboardHome() {
   const [searchQuery, setSearchQuery] = useState('');
   const { dashboardData, loading, error, fetchDashboardData } = useDashboardStore();
+
+  console.log("Dashboard",dashboardData)
 
   useEffect(() => {
     fetchDashboardData();
@@ -89,12 +93,14 @@ export default function DashboardHome() {
   const getMetricCards = (): MetricCard[] => {
     if (!dashboardData) return [];
     
-    const { summary } = dashboardData;
+    
+
+    const { totalLeads,totalUsers ,totalBookings,totalPaidUsers,totalRevenue} = dashboardData;
     
     return [
       {
         title: 'Total Leads',
-        value: summary.totalLeads.toString(),
+        value:totalLeads?.toString() || 0,
         change: 15.3, // You can calculate this based on historical data
         icon: <Target className="w-6 h-6 text-blue-600" />,
         trend: 'up',
@@ -102,7 +108,7 @@ export default function DashboardHome() {
       },
       {
         title: 'Total Bookings',
-        value: summary.totalBookings.toString(),
+        value:  totalBookings?.toString() || 0,
         change: 8.2,
         icon: <Calendar className="w-6 h-6 text-indigo-600" />,
         trend: 'up',
@@ -110,7 +116,7 @@ export default function DashboardHome() {
       },
       {
         title: 'Total Users',
-        value: summary.totalUsers.toString(),
+        value: totalUsers?.toString() || 0,
         change: 12.5,
         icon: <Users className="w-6 h-6 text-purple-600" />,
         trend: 'up',
@@ -118,7 +124,7 @@ export default function DashboardHome() {
       },
       {
         title: 'Paid Users',
-        value: summary.totalPaidUsers.toString(),
+        value:  totalPaidUsers?.toString() || 0 ,
         change: 4.1,
         icon: <UserCheck className="w-6 h-6 text-emerald-600" />,
         trend: 'up',
@@ -126,7 +132,8 @@ export default function DashboardHome() {
       },
       {
         title: 'Total Revenue',
-        value: formatCurrency(summary.totalRevenue),
+        // value: formatCurrency(summary?.totalRevenue) || 0,
+        value: formatCurrency(totalRevenue || 0),
         change: 4.1,
         icon: <DollarSign className="w-6 h-6 text-green-600" />,
         trend: 'up',
@@ -229,32 +236,33 @@ export default function DashboardHome() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               <div className="text-center p-6 bg-blue-50 rounded-lg">
                 <Target className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-blue-900">{dashboardData?.summary.totalLeads || 0}</p>
+                <p className="text-2xl font-bold text-blue-900">{dashboardData?.totalLeads || 0}</p>
                 <p className="text-sm text-blue-600">Total Leads</p>
               </div>
               <div className="text-center p-6 bg-indigo-50 rounded-lg">
                 <Calendar className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-indigo-900">{dashboardData?.summary.totalBookings || 0}</p>
+                <p className="text-2xl font-bold text-indigo-900">{dashboardData?.totalBookings || 0}</p>
                 <p className="text-sm text-indigo-600">Total Bookings</p>
               </div>
               <div className="text-center p-6 bg-purple-50 rounded-lg">
                 <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-purple-900">{dashboardData?.summary.totalUsers || 0}</p>
+                <p className="text-2xl font-bold text-purple-900">{dashboardData?.totalUsers || 0}</p>
                 <p className="text-sm text-purple-600">Total Users</p>
               </div>
               <div className="text-center p-6 bg-emerald-50 rounded-lg">
                 <UserCheck className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-emerald-900">{dashboardData?.summary.totalPaidUsers || 0}</p>
+                <p className="text-2xl font-bold text-emerald-900">{dashboardData?.totalPaidUsers || 0}</p>
                 <p className="text-sm text-emerald-600">Paid Users</p>
               </div>
               <div className="text-center p-6 bg-green-50 rounded-lg">
                 <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-green-900">{formatCurrency(dashboardData?.summary.totalRevenue || 0)}</p>
+                {/* <p className="text-2xl font-bold text-green-900">{formatCurrency(dashboardData?.summary?.totalRevenue || 0)}</p> */}
+                <p className="text-2xl font-bold text-green-900">{formatCurrency(dashboardData?.totalRevenue || 0)}</p>
                 <p className="text-sm text-green-600">Total Revenue</p>
               </div>
               <div className="text-center p-6 bg-yellow-50 rounded-lg">
                 <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-yellow-900">{dashboardData?.summary.totalTrialUsers || 0}</p>
+                <p className="text-2xl font-bold text-yellow-900">{dashboardData?.summary?.totalTrialUsers || 0}</p>
                 <p className="text-sm text-yellow-600">Trial Users</p>
               </div>
             </div>
@@ -273,7 +281,7 @@ export default function DashboardHome() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {dashboardData?.activityFeed.map((activity, index) => (
+              {dashboardData?.activityFeed?.map((activity, index) => (
                 <div
                   key={index}
                   className="flex items-start space-x-4 p-4 hover:bg-muted/50 rounded-lg transition-colors"

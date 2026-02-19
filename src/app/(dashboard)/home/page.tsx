@@ -35,7 +35,6 @@ interface MetricCard {
   icon: React.ReactNode;
   trend: 'up' | 'down';
   subtitle?: string;
-  totalLeads?:number;
   totalUsers?:number;
 }
 
@@ -95,17 +94,9 @@ export default function DashboardHome() {
     
     
 
-    const { totalLeads,totalUsers ,totalBookings,totalPaidUsers,totalRevenue} = dashboardData;
+    const { totalUsers ,totalBookings,totalPaidUsers,totalRevenue} = dashboardData;
     
     return [
-      {
-        title: 'Total Leads',
-        value:totalLeads?.toString() || 0,
-        change: 15.3, // You can calculate this based on historical data
-        icon: <Target className="w-6 h-6 text-blue-600" />,
-        trend: 'up',
-        subtitle: 'All time',
-      },
       {
         title: 'Total Bookings',
         value:  totalBookings?.toString() || 0,

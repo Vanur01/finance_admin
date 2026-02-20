@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuthStore } from '../../lib/stores/authStore';
 
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://chaisen.vanurmedia.com',
   withCredentials: true, 
 });
 

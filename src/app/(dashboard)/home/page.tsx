@@ -35,16 +35,14 @@ interface MetricCard {
   icon: React.ReactNode;
   trend: 'up' | 'down';
   subtitle?: string;
-  totalUsers?:number;
+  totalUsers?: number;
 }
-
-
 
 export default function DashboardHome() {
   const [searchQuery, setSearchQuery] = useState('');
   const { dashboardData, loading, error, fetchDashboardData } = useDashboardStore();
 
-  console.log("Dashboard",dashboardData)
+  console.log("Dashboard", dashboardData);
 
   useEffect(() => {
     fetchDashboardData();
@@ -92,14 +90,14 @@ export default function DashboardHome() {
   const getMetricCards = (): MetricCard[] => {
     if (!dashboardData) return [];
     
-    
-
-    const { totalUsers ,totalBookings,totalPaidUsers,totalRevenue} = dashboardData;
+    // Check the actual structure of your dashboardData
+    // Based on your usage in the summary stats section, it seems the data might be structured like this:
+    const data = dashboardData;
     
     return [
       {
         title: 'Total Bookings',
-        value:  totalBookings?.toString() || 0,
+        value: data?.totalBookings?.toString() || '0',
         change: 8.2,
         icon: <Calendar className="w-6 h-6 text-indigo-600" />,
         trend: 'up',
@@ -107,7 +105,7 @@ export default function DashboardHome() {
       },
       {
         title: 'Total Users',
-        value: totalUsers?.toString() || 0,
+        value: data?.totalUsers?.toString() || '0',
         change: 12.5,
         icon: <Users className="w-6 h-6 text-purple-600" />,
         trend: 'up',
@@ -115,7 +113,7 @@ export default function DashboardHome() {
       },
       {
         title: 'Paid Users',
-        value:  totalPaidUsers?.toString() || 0 ,
+        value: data?.totalPaidUsers?.toString() || '0',
         change: 4.1,
         icon: <UserCheck className="w-6 h-6 text-emerald-600" />,
         trend: 'up',
@@ -123,8 +121,7 @@ export default function DashboardHome() {
       },
       {
         title: 'Total Revenue',
-        // value: formatCurrency(summary?.totalRevenue) || 0,
-        value: formatCurrency(totalRevenue || 0),
+        value: formatCurrency(data?.totalRevenue || 0),
         change: 4.1,
         icon: <DollarSign className="w-6 h-6 text-green-600" />,
         trend: 'up',
@@ -247,7 +244,6 @@ export default function DashboardHome() {
               </div>
               <div className="text-center p-6 bg-green-50 rounded-lg">
                 <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                {/* <p className="text-2xl font-bold text-green-900">{formatCurrency(dashboardData?.summary?.totalRevenue || 0)}</p> */}
                 <p className="text-2xl font-bold text-green-900">{formatCurrency(dashboardData?.totalRevenue || 0)}</p>
                 <p className="text-sm text-green-600">Total Revenue</p>
               </div>
@@ -292,8 +288,6 @@ export default function DashboardHome() {
           </CardContent>
         </Card>
       </div>
-
-
     </div>
   );
 }
